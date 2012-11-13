@@ -1,6 +1,4 @@
-# Text wrapping module
-
-require("options.jl")
+require("Options")
 
 module TextWrap
 using Base
