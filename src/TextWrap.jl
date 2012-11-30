@@ -1,7 +1,6 @@
 require("Options")
 
 module TextWrap
-using Base
 using OptionsMod
 
 export
