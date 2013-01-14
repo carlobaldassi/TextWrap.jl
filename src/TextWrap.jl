@@ -44,7 +44,7 @@ function _check_indent(indent::Integer, width::Integer)
     return true
 end
 function _check_indent(indent::String, width::Integer)
-    if strlen(indent) >= width
+    if length(indent) >= width
         error("invalid intent (must be shorter than width-1)")
     end
 end
@@ -75,7 +75,7 @@ function _put_chunks(chunk::String, out_str,
                     width, initial_indent, subsequent_indent,
                     break_long_words)
         soh = ""
-        chunk = chunk[m.offset+length(c):end]
+        chunk = chunk[m.offset+endof(c):end]
     end
     cln, cll, bol, lcise = _put_chunk(chunk, out_str,
                 cln, cll, bol, soh,
@@ -98,10 +98,10 @@ function _put_chunk(chunk::String, out_str,
     # go in front of chunk, and it may or may not be printed.
     # The rest are options.
 
-    liindent = strlen(initial_indent)
-    lsindent = strlen(subsequent_indent)
-    lchunk = strlen(chunk)
-    lsoh = strlen(soh)
+    liindent = length(initial_indent)
+    lsindent = length(subsequent_indent)
+    lchunk = length(chunk)
+    lsoh = length(soh)
 
     if cll + lsoh > width
         soh = ""
@@ -148,7 +148,7 @@ function _put_chunk(chunk::String, out_str,
             print(out_str, soh, chunk[1:chr2ind(chunk, width-cll-lsoh)], "\n",
                     subsequent_indent)
             chunk = chunk[chr2ind(chunk, width-cll-lsoh+1):end]
-            lchunk = strlen(chunk)
+            lchunk = length(chunk)
             cll = lsindent
             cln += 1
             soh = ""
@@ -212,7 +212,7 @@ function wrap(text::String, opts::Options)
     # We iterate over the text, looking for whitespace
     # where to split.
     i = start(text)
-    l = length(text)
+    l = endof(text)
     out_str = memio(0, false)
 
     j, k = search(text, r"\s+", i)
@@ -242,7 +242,7 @@ function wrap(text::String, opts::Options)
             soh = "  "
         end
         if replace_whitespace
-            soh = " "^strlen(soh)
+            soh = " "^length(soh)
         end
 
         # Continue the search
