@@ -274,7 +274,7 @@ function _print_wrapped(newline::Bool, args...)
         io = args[1]
         args = args[2:end]
     else
-        io = stdout_stream
+        io = STDOUT
     end
     if !isempty(args) && isa(args[end], Options)
         opts = args[end]
