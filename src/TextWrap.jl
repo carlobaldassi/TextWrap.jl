@@ -284,7 +284,7 @@ function _print_wrapped(newline::Bool, args...)
     end
 
     if !isempty(args)
-        ws = wrap(strcat(args...), opts)
+        ws = wrap(string(args...), opts)
     else
         ws = ""
     end
