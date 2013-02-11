@@ -77,6 +77,7 @@ function _put_chunks(chunk::String, out_str,
         soh = ""
         chunk = chunk[m.offset+endof(c):end]
     end
+
     cln, cll, bol, lcise = _put_chunk(chunk, out_str,
                 cln, cll, bol, soh,
                 width, initial_indent, subsequent_indent,
@@ -215,7 +216,9 @@ function wrap(text::String, opts::Options)
     l = endof(text)
     out_str = memio(0, false)
 
-    j, k = search(text, r"\s+", i)
+    wsrng = search(text, r"\s+", i)
+    j = first(wsrng)
+    k = last(wsrng) + 1
     while 0 < j <= l
         if i < k
             if i < j
@@ -248,7 +251,9 @@ function wrap(text::String, opts::Options)
         # Continue the search
 
         if k <= j; k = nextind(text,j) end
-        j, k = search(text, r"\s+", k)
+        wsrng = search(text, r"\s+", k)
+        j = first(wsrng)
+        k = last(wsrng) + 1
     end
     if !done(text,i)
         # Some non-whitespace is left at the end.
