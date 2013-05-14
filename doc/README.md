@@ -1,7 +1,7 @@
-ArgParse.jl Documentation README
+TextWrap.jl Documentation README
 ================================
 
-ArgParse.jl's documentation is written in reStructuredText, a good reference for which
+TextWrap.jl's documentation is written in reStructuredText, a good reference for which
 is the [Documenting Python](http://docs.python.org/devguide/documenting.html)
 chapter of the Python Developer's Guide.
 
