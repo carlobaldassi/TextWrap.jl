@@ -1,7 +1,4 @@
-require("Options")
-
 module TextWrap
-using OptionsMod
 
 export
     wrap,
@@ -29,14 +26,12 @@ function _expand_tabs(text::String, i0::Int)
     return takebuf_string(out_buf)
 end
 
-_check_width(width) = error("width must be an Integer")
 function _check_width(width::Integer)
     if width <= 0
         error("invalid width $width (must be > 0)")
     end
     return true
 end
-_check_indent(indent) = error("indentation must be either an Integer or a String")
 function _check_indent(indent::Integer, width::Integer)
     if indent < 0 || indent >= width
         error("invalid intent $indent (must be an integer between 0 and width-1, or a String)")
@@ -48,8 +43,6 @@ function _check_indent(indent::String, width::Integer)
         error("invalid intent (must be shorter than width-1)")
     end
 end
-_check_is_bool(flag) = error("invalid value $flag (must be a Bool)")
-_check_is_bool(flag::Bool) = true
 
 
 function _put_chunks(chunk::String, out_str,
@@ -167,31 +160,23 @@ function _put_chunk(chunk::String, out_str,
     return cln, cll, bol, lcise
 end
 
-function wrap(text::String, opts::Options)
+function wrap(text::String;
+              width::Int = 70,
+              initial_indent::Union(Integer,String) = "",
+              subsequent_indent::Union(Integer,String) = "",
+              expand_tabs::Bool = true,
+              replace_whitespace::Bool = true,
+              fix_sentence_endings::Bool = false,
+              break_long_words::Bool = true,
+              break_on_hyphens::Bool = true)
 
     # Reformat the single paragraph in 'text' so it fits in lines of
     # no more than 'opts.width' columns, and return a String.
-
-    @defaults(opts,
-        width=>70,
-        initial_indent=>"",
-        subsequent_indent=>"",
-        expand_tabs=>true,
-        replace_whitespace=>true,
-        fix_sentence_endings=>false,
-        break_long_words=>true,
-        break_on_hyphens=>true)
-    @check_used(opts)
 
     # Sanity checks
     _check_width(width)
     _check_indent(initial_indent, width)
     _check_indent(subsequent_indent, width)
-    _check_is_bool(expand_tabs)
-    _check_is_bool(replace_whitespace)
-    _check_is_bool(fix_sentence_endings)
-    _check_is_bool(break_long_words)
-    _check_is_bool(break_on_hyphens)
 
     if isa(initial_indent, Integer)
         initial_indent = " "^initial_indent
@@ -265,7 +250,6 @@ function wrap(text::String, opts::Options)
     end
     return takebuf_string(out_str)
 end
-wrap(text::String) = wrap(text, Options())
 
 # print functions signature:
 #   first arg: IO
@@ -274,22 +258,16 @@ wrap(text::String) = wrap(text, Options())
 #
 #   all arguments are optional
 #
-function _print_wrapped(newline::Bool, args...)
+function _print_wrapped(newline::Bool, args...; kwargs...)
     if !isempty(args) && isa(args[1], IO)
         io = args[1]
         args = args[2:end]
     else
-        io = STDOUT
-    end
-    if !isempty(args) && isa(args[end], Options)
-        opts = args[end]
-        args = args[1:end-1]
-    else
-        opts = Options()
+        io = OUTPUT_STREAM
     end
 
     if !isempty(args)
-        ws = wrap(string(args...), opts)
+        ws = wrap(string(args...); kwargs...)
     else
         ws = ""
     end
@@ -300,7 +278,7 @@ function _print_wrapped(newline::Bool, args...)
         print(io, ws)
     end
 end
-print_wrapped(args...) = _print_wrapped(false, args...)
-println_wrapped(args...) = _print_wrapped(true, args...)
+print_wrapped(args...; kwargs...) = _print_wrapped(false, args...; kwargs...)
+println_wrapped(args...; kwargs...) = _print_wrapped(true, args...; kwargs...)
 
 end # module TextWrap
