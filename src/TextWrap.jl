@@ -263,7 +263,7 @@ function _print_wrapped(newline::Bool, args...; kwargs...)
         io = args[1]
         args = args[2:end]
     else
-        io = OUTPUT_STREAM
+        io = STDOUT
     end
 
     if !isempty(args)
