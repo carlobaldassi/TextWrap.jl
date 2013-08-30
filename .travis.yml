@@ -9,11 +9,7 @@ before_install:
     - sudo apt-get update -qq -y
     - sudo apt-get upgrade -y
     - sudo apt-get install julia -y
-    - git config --global user.name "Travis User"
-    - git config --global user.email "travis@example.net"
 script:
-    - julia -e "Pkg.init()"
-    - julia -e "Pkg.add(\"Options\")"
-    - mkdir -p ~/.julia/TextWrap
-    - cp -R ./* ~/.julia/TextWrap/
-    - julia ~/.julia/TextWrap/test/test.jl
+    - julia -e 'Pkg.init(); run(`ln -s $(pwd()) $(Pkg.dir())/`); Pkg.resolve()'
+    - julia -e 'using TextWrap; @assert isdefined(:TextWrap); @assert typeof(TextWrap) === Module'
+    - julia test/runtests.jl
