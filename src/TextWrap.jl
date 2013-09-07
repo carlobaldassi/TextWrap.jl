@@ -6,7 +6,7 @@ export
     println_wrapped
 
 function _expand_tabs(text::String, i0::Int)
-    out_buf = memio(0, false)
+    out_buf = IOBuffer()
     i = i0 % 8
     for c in text
         if c == '\t'
@@ -199,7 +199,7 @@ function wrap(text::String;
     # where to split.
     i = start(text)
     l = endof(text)
-    out_str = memio(0, false)
+    out_str = IOBuffer()
 
     wsrng = search(text, r"\s+", i)
     j = first(wsrng)
