@@ -137,10 +137,14 @@ function _put_chunk(chunk::String, out_str,
     # break it until it fits
     else
         while cll + lsoh + lchunk > width
-            print(out_str, soh, chunk[1:chr2ind(chunk, width-cll-lsoh)], "\n",
-                    subsequent_indent)
-            chunk = chunk[chr2ind(chunk, width-cll-lsoh+1):end]
-            lchunk = length(chunk)
+            if width - cll - lsoh > 0
+                print(out_str, soh, chunk[1:chr2ind(chunk, width-cll-lsoh)], "\n",
+                        subsequent_indent)
+                chunk = chunk[chr2ind(chunk, width-cll-lsoh+1):end]
+                lchunk = length(chunk)
+            else
+                print(out_str, "\n", subsequent_indent)
+            end
             cll = lsindent
             cln += 1
             soh = ""
