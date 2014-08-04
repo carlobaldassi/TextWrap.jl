@@ -53,9 +53,7 @@ function _put_chunks(chunk::String, out_str,
     # This function just performs breaks-on-hyphens and passes
     # individual chunks to _put_chunk
 
-    _hyphen_re =
-        r"([^\s\w]*\w+[^0-9\W]-(?=\w+[^0-9\W])|
-           (?<=[\w\!\"\'\&\.\,\?])-{2,}(?=\w))"x
+    _hyphen_re = r"^(\w+-)*?\w+[^0-9\W]+-(?=\w+[^0-9\W])"
 
     while break_on_hyphens
         m = match(_hyphen_re, chunk)
