@@ -4,3 +4,4 @@ The documentation can be found at http://textwrapjl.readthedocs.org/en/release-0
 in the doc/ directory (see doc/README.md).
 
 [![Build Status](https://api.travis-ci.org/carlobaldassi/TextWrap.jl.png?branch=master)](https://travis-ci.org/carlobaldassi/TextWrap.jl)
+[![Coverage Status](https://img.shields.io/coveralls/carlobaldassi/TextWrap.jl.svg)](https://coveralls.io/r/carlobaldassi/TextWrap.jl)
