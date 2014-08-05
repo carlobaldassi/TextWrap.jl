@@ -59,7 +59,21 @@ text = """
     and an extensive mathematical
     function library."""
 
-tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee\tfff\tgg\th\n"
+@test wrap(text, width=32, initial_indent=">   ", subsequent_indent="> ") == """
+    >   Julia is a high-level, high-
+    > performance dynamic
+    > programming language for
+    > technical computing, with
+    > syntax that is familiar to
+    > users of other technical
+    > computing environments. It
+    > provides a sophisticated
+    > compiler, distributed parallel
+    > execution, numerical accuracy,
+    > and an extensive mathematical
+    > function library."""
+
+tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
 
 @test wrap(tabtext, width=20, replace_whitespace=true,  expand_tabs=true) ==
     "aaaaaaa bbbbbbb\ncccccc  ddddd   eeee\nfff     gg      h"
@@ -363,6 +377,8 @@ end
 if VERSION >= v"0.3-"
     @test_throws ErrorException wrap("", initial_indent=10, width=10)
     @test_throws ErrorException wrap("", subsequent_indent=10, width=10)
+    @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
+    @test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
 end
 
 end
