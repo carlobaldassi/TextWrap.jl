@@ -374,11 +374,17 @@ finally
     isfile(tmpf) && rm(tmpf)
 end
 
-if VERSION >= v"0.3-"
-    @test_throws ErrorException wrap("", initial_indent=10, width=10)
-    @test_throws ErrorException wrap("", subsequent_indent=10, width=10)
-    @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
-    @test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
+macro backwardscompatible_test_throws(args...)
+    if VERSION >= v"0.3-"
+        :(@test_throws($(esc(args[1])), $(esc(args[2]))))
+    else
+        :(@test_throws($(esc(args[2]))))
+    end
 end
+
+@backwardscompatible_test_throws ErrorException wrap("", initial_indent=10, width=10)
+@backwardscompatible_test_throws ErrorException wrap("", subsequent_indent=10, width=10)
+@backwardscompatible_test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
+@backwardscompatible_test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
 
 end
