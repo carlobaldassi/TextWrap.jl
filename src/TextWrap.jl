@@ -2,12 +2,14 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__()
 
 module TextWrap
 
+using Compat
+
 export
     wrap,
     print_wrapped,
     println_wrapped
 
-function _expand_tabs(text::String, i0::Int)
+function _expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
     i = i0 % 8
     for c in text
@@ -36,18 +38,18 @@ function _check_width(width::Integer)
 end
 function _check_indent(indent::Integer, width::Integer)
     if indent < 0 || indent >= width
-        error("invalid intent $indent (must be an integer between 0 and width-1, or a String)")
+        error("invalid intent $indent (must be an integer between 0 and width-1, or an AbstractString)")
     end
     return true
 end
-function _check_indent(indent::String, width::Integer)
+function _check_indent(indent::AbstractString, width::Integer)
     if length(indent) >= width
         error("invalid intent (must be shorter than width-1)")
     end
 end
 
 
-function _put_chunks(chunk::String, out_str,
+function _put_chunks(chunk::AbstractString, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
                     break_on_hyphens, break_long_words)
@@ -78,7 +80,7 @@ function _put_chunks(chunk::String, out_str,
     return cln, cll, bol, lcise
 end
 
-function _put_chunk(chunk::String, out_str,
+function _put_chunk(chunk::AbstractString, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
                     break_long_words)
@@ -164,18 +166,18 @@ function _put_chunk(chunk::String, out_str,
     return cln, cll, bol, lcise
 end
 
-function wrap(text::String;
-              width::Int = 70,
-              initial_indent::Union(Integer,String) = "",
-              subsequent_indent::Union(Integer,String) = "",
-              expand_tabs::Bool = true,
-              replace_whitespace::Bool = true,
-              fix_sentence_endings::Bool = false,
-              break_long_words::Bool = true,
-              break_on_hyphens::Bool = true)
+@compat function wrap(text::AbstractString;
+                      width::Int = 70,
+                      initial_indent::Union{Integer,AbstractString} = "",
+                      subsequent_indent::Union{Integer,AbstractString} = "",
+                      expand_tabs::Bool = true,
+                      replace_whitespace::Bool = true,
+                      fix_sentence_endings::Bool = false,
+                      break_long_words::Bool = true,
+                      break_on_hyphens::Bool = true)
 
     # Reformat the single paragraph in 'text' so it fits in lines of
-    # no more than 'opts.width' columns, and return a String.
+    # no more than 'opts.width' columns, and return an AbstractString.
 
     # Sanity checks
     _check_width(width)
