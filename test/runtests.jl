@@ -2,6 +2,7 @@ module TextWrapTest
 
 using TextWrap
 using Base.Test
+using Compat
 
 text = """
     Julia is a high-level, high-performance dynamic programming language
@@ -309,7 +310,7 @@ try
     open(tmpf, "w") do f
         print_wrapped(f, text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
     end
-    @test readall(tmpf) == """
+    @test readstring(tmpf) == """
         Julia is a high-level,
         high-performance dynamic
         programming language for
@@ -326,7 +327,7 @@ try
     open(tmpf, "w") do f
         println_wrapped(f, text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
     end
-    @test readall(tmpf) == """
+    @test readstring(tmpf) == """
         Julia is a high-level,
         high-performance dynamic
         programming language for
@@ -344,7 +345,7 @@ try
     open(tmpf, "w") do f
         println_wrapped(f, width=30, fix_sentence_endings=true, break_on_hyphens=false)
     end
-    @test readall(tmpf) == "\n"
+    @test readstring(tmpf) == "\n"
 
     if VERSION >= v"0.3-"
         open(tmpf, "w") do f
@@ -356,7 +357,7 @@ try
                 redirect_stdout(bk_STDOUT)
             end
         end
-        @test readall(tmpf) == """
+        @test readstring(tmpf) == """
             Julia is a high-level,
             high-performance dynamic
             programming language for
