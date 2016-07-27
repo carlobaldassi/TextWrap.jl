@@ -3,6 +3,7 @@ VERSION >= v"0.4.0-dev+6521" && __precompile__()
 module TextWrap
 
 using Compat
+import Compat: String
 
 export
     wrap,
@@ -199,7 +200,7 @@ end
     soh = "" # space on hold
 
     # Preliminary conversion to UTF8
-    text = utf8(text)
+    text = @compat String(text)
 
     # We iterate over the text, looking for whitespace
     # where to split.
