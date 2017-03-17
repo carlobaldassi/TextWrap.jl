@@ -1,3 +1,9 @@
+"""
+    TextWrap
+
+Module for wrapping long lines of text to fit within a given width.
+See [`wrap`](@ref), [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
+"""
 module TextWrap
 
 using Compat
@@ -164,15 +170,41 @@ function _put_chunk(chunk::AbstractString, out_str,
     return cln, cll, bol, lcise
 end
 
- function wrap(text::AbstractString;
-               width::Int = 70,
-               initial_indent::Union{Integer,AbstractString} = "",
-               subsequent_indent::Union{Integer,AbstractString} = "",
-               expand_tabs::Bool = true,
-               replace_whitespace::Bool = true,
-               fix_sentence_endings::Bool = false,
-               break_long_words::Bool = true,
-               break_on_hyphens::Bool = true)
+"""
+    wrap(string; keywords...)
+
+Parses `string` and returns a new string in which newlines are inserted as appropriate in order
+for each line to fit within a specified width.
+
+The behaviour can be controlled via optional keyword arguments:
+
+* `width` (deafult=`70`): the maximum width of the wrapped text, including indentation.
+* `initial_indent` (default=`""`): indentation of the first line. This can
+   be any string (shorter than `width`), or it can be an integer number (lower than `width`).
+* `subsequent_indent` (default=`""`): indentation of all lines except the first. Works the same as
+   `initial_indent`.
+* `break_on_hyphens` (default=`true`): this flag determines whether words can be broken on hyphens,
+  e.g. whether "high-precision" can be split into "high-" and "precision".
+* `break_long_words` (default=`true`): this flag determines what to do when a word is too long to
+  fit in any line. If `true`, the word will be broken, otherwise it will go beyond the desired text
+  width.
+* `replace_whitespace` (default=`true`): if this flag is `true`, all whitespace characters in the
+  original text (including newlines) will be replaced by spaces.
+* `expand_tabs` (default=`true`): if this flag is `true`, tabs will be expanded in-place into spaces.
+  The expansion happens before whitespace replacement.
+* `fix_sentence_endings` (default=`false`): if this flag is `true`, the wrapper will try to recognize
+  sentence endings in the middle of a paragraph and put two spaces before the next sentence in case
+  only one is present.
+"""
+function wrap(text::AbstractString;
+              width::Int = 70,
+              initial_indent::Union{Integer,AbstractString} = "",
+              subsequent_indent::Union{Integer,AbstractString} = "",
+              expand_tabs::Bool = true,
+              replace_whitespace::Bool = true,
+              fix_sentence_endings::Bool = false,
+              break_long_words::Bool = true,
+              break_on_hyphens::Bool = true)
 
     # Reformat the single paragraph in 'text' so it fits in lines of
     # no more than 'opts.width' columns, and return an AbstractString.
@@ -279,7 +311,21 @@ function _print_wrapped(newline::Bool, args...; kwargs...)
         print(io, ws)
     end
 end
+
+"""
+    print_wrapped([io,] text...; keywords...)
+
+This is just like the standard `print` function (it prints multiple arguments and accepts
+an optional `IO` first argument), except that it wraps the result, and accepts keyword
+arguments to pass to [`wrap`](@ref).
+"""
 print_wrapped(args...; kwargs...) = _print_wrapped(false, args...; kwargs...)
+
+"""
+    println_wrapped([io,] text...; keywords...)
+
+Like [`print_wrapped`](@ref), but adds a newline at the end.
+"""
 println_wrapped(args...; kwargs...) = _print_wrapped(true, args...; kwargs...)
 
 end # module TextWrap
