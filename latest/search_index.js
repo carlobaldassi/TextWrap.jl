@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "TextWrap.jl documentation",
     "category": "section",
-    "text": "CurrentModule = TextWrapThis package provides the function wrap which parses an input text and reorganizes its white space so that it can be printed with a fixed screen width, optionally indenting it. It also provides the two convenience functions print_wrapped and println_wrapped.Here is a quick example:julia> using TextWrap\n\njulia> text = \"This text is going to be wrapped around in lines no longer than 20 characters.\";\n\njulia> println_wrapped(text, width=20)\nThis text is going\nto be wrapped around\nin lines no longer\nthan 20 characters.It's very similar to Python's textwrap module, but the interface is slightly different."
+    "text": "CurrentModule = TextWrapThis Julia package provides the function wrap which parses an input text and reorganizes its white space so that it can be printed with a fixed screen width, optionally indenting it. It also provides the two convenience functions print_wrapped and println_wrapped.Here is a quick example:julia> using TextWrap\n\njulia> text = \"This text is going to be wrapped around in lines no longer than 20 characters.\";\n\njulia> println_wrapped(text, width=20)\nThis text is going\nto be wrapped around\nin lines no longer\nthan 20 characters.It's very similar to Python's textwrap module, but the interface is slightly different."
 },
 
 {
@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Usage",
     "category": "section",
-    "text": "The module is loaded as any other Julia module:julia> using TextWrap"
+    "text": "The module is loaded like any other Julia module:julia> using TextWrap"
 },
 
 {
