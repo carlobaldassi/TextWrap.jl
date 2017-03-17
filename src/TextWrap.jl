@@ -1,8 +1,9 @@
 """
     TextWrap
 
-Module for wrapping long lines of text to fit within a given width.
-See [`wrap`](@ref), [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
+This module provides the function [`wrap`](@ref) which parses an input text
+and reorganizes its white space so that it can be printed with a fixed screen width, optionally indenting it.
+It also provides the two convenience functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
 """
 module TextWrap
 

@@ -4,9 +4,9 @@
 CurrentModule = TextWrap
 ```
 
-This package provides the function [`wrap`](@ref) which parses an input text and reorganizes its white space so that
-it can be printed with a fixed screen width, optionally indenting it. It also provides the two convenience
-functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
+This [Julia](http://julialang.org) package provides the function [`wrap`](@ref) which parses an input text
+and reorganizes its white space so that it can be printed with a fixed screen width, optionally indenting it.
+It also provides the two convenience functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
 
 Here is a quick example:
 
@@ -37,7 +37,7 @@ Dependencies will be installed automatically.
 
 ## Usage
 
-The module is loaded as any other Julia module:
+The module is loaded like any other Julia module:
 
 ```
 julia> using TextWrap
