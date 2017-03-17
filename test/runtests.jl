@@ -2,7 +2,6 @@ module TextWrapTest
 
 using TextWrap
 using Base.Test
-using Compat
 
 text = """
     Julia is a high-level, high-performance dynamic programming language
@@ -347,30 +346,28 @@ try
     end
     @test readstring(tmpf) == "\n"
 
-    if VERSION >= v"0.3-"
-        open(tmpf, "w") do f
-            bk_STDOUT = STDOUT
-            try
-                redirect_stdout(f)
-                print_wrapped(text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
-            finally
-                redirect_stdout(bk_STDOUT)
-            end
+    open(tmpf, "w") do f
+        bk_STDOUT = STDOUT
+        try
+            redirect_stdout(f)
+            print_wrapped(text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
+        finally
+            redirect_stdout(bk_STDOUT)
         end
-        @test readstring(tmpf) == """
-            Julia is a high-level,
-            high-performance dynamic
-            programming language for
-            technical computing, with
-            syntax that is familiar to
-            users of other technical
-            computing environments.  It
-            provides a sophisticated
-            compiler, distributed parallel
-            execution, numerical accuracy,
-            and an extensive mathematical
-            function library."""
     end
+    @test readstring(tmpf) == """
+        Julia is a high-level,
+        high-performance dynamic
+        programming language for
+        technical computing, with
+        syntax that is familiar to
+        users of other technical
+        computing environments.  It
+        provides a sophisticated
+        compiler, distributed parallel
+        execution, numerical accuracy,
+        and an extensive mathematical
+        function library."""
 finally
     isfile(tmpf) && rm(tmpf)
 end

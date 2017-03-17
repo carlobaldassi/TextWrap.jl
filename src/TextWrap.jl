@@ -1,9 +1,6 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__()
-
 module TextWrap
 
 using Compat
-import Compat: String
 
 export
     wrap,
@@ -28,7 +25,7 @@ function _expand_tabs(text::AbstractString, i0::Int)
             i = (i + 1) % 8
         end
     end
-    return takebuf_string(out_buf)
+    return String(take!(out_buf))
 end
 
 function _check_width(width::Integer)
@@ -167,15 +164,15 @@ function _put_chunk(chunk::AbstractString, out_str,
     return cln, cll, bol, lcise
 end
 
-@compat function wrap(text::AbstractString;
-                      width::Int = 70,
-                      initial_indent::Union{Integer,AbstractString} = "",
-                      subsequent_indent::Union{Integer,AbstractString} = "",
-                      expand_tabs::Bool = true,
-                      replace_whitespace::Bool = true,
-                      fix_sentence_endings::Bool = false,
-                      break_long_words::Bool = true,
-                      break_on_hyphens::Bool = true)
+ function wrap(text::AbstractString;
+               width::Int = 70,
+               initial_indent::Union{Integer,AbstractString} = "",
+               subsequent_indent::Union{Integer,AbstractString} = "",
+               expand_tabs::Bool = true,
+               replace_whitespace::Bool = true,
+               fix_sentence_endings::Bool = false,
+               break_long_words::Bool = true,
+               break_on_hyphens::Bool = true)
 
     # Reformat the single paragraph in 'text' so it fits in lines of
     # no more than 'opts.width' columns, and return an AbstractString.
@@ -198,9 +195,6 @@ end
     bol = true # beginning of line
     lcise = false # last chunk is sentence ending
     soh = "" # space on hold
-
-    # Preliminary conversion to UTF8
-    text = @compat String(text)
 
     # We iterate over the text, looking for whitespace
     # where to split.
@@ -255,7 +249,7 @@ end
                     width, initial_indent, subsequent_indent,
                     break_on_hyphens, break_long_words)
     end
-    return takebuf_string(out_str)
+    return String(take!(out_str))
 end
 
 # print functions signature:
