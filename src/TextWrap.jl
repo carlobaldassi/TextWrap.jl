@@ -77,7 +77,7 @@ function _put_chunks(chunk::AbstractString, out_str,
                     width, initial_indent, subsequent_indent,
                     break_long_words)
         soh = ""
-        chunk = chunk[m.offset+endof(c):end]
+        chunk = chunk[m.offset+lastindex(c):end]
     end
 
     cln, cll, bol, lcise = _put_chunk(chunk, out_str,
@@ -141,7 +141,7 @@ function _put_chunk(chunk::AbstractString, out_str,
     # does the chunk fit into next line? or are we
     # forced to put it there?
     elseif lchunk <= width - lsindent || !break_long_words
-        print(out_str, bol?"":"\n", subsequent_indent, chunk)
+        print(out_str, bol ? "" : "\n", subsequent_indent, chunk)
         cll = lsindent + lchunk
         cln += 1
         bol = false
@@ -168,7 +168,7 @@ function _put_chunk(chunk::AbstractString, out_str,
 
     # detect end-of-sentences
     _sentence_end_re = r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z"
-    lcise = ismatch(_sentence_end_re, chunk)
+    lcise = contains(chunk, _sentence_end_re)
 
     return cln, cll, bol, lcise
 end
@@ -234,10 +234,10 @@ function wrap(text::AbstractString;
     # We iterate over the text, looking for whitespace
     # where to split.
     i = start(text)
-    l = endof(text)
+    l = lastindex(text)
     out_str = IOBuffer()
 
-    wsrng = search(text, r"\s+", i)
+    wsrng = findnext(r"\s+", text, i)
     j = first(wsrng)
     k = last(wsrng) + 1
     while 0 < j <= l
@@ -259,7 +259,7 @@ function wrap(text::AbstractString;
         # sentence endings, replace it with single spaces) and
         # then we keep it on hold.
         soh = text[j:k-1]
-        if expand_tabs && ismatch(r"\t", soh)
+        if expand_tabs && contains(soh, r"\t")
             soh = _expand_tabs(soh, cll)
         end
         if fix_sentence_endings && lcise && soh == " "
@@ -272,7 +272,7 @@ function wrap(text::AbstractString;
         # Continue the search
 
         if k <= j; k = nextind(text,j) end
-        wsrng = search(text, r"\s+", k)
+        wsrng = findnext(r"\s+", text, k)
         j = first(wsrng)
         k = last(wsrng) + 1
     end
