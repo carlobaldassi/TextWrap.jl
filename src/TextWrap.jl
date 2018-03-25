@@ -11,6 +11,12 @@ module TextWrap
 
 using Compat
 
+if VERSION < v"0.7.0-DEV.2949"
+    # horrible, but we don't need to reimplement all of the logic here
+    # TODO: remove it if Compat implements this...
+    Base.nextind(s, i, j) = (@assert i == 0; chr2ind(s, j))
+end
+
 export
     wrap,
     print_wrapped,
@@ -77,7 +83,7 @@ function _put_chunks(chunk::AbstractString, out_str,
                     width, initial_indent, subsequent_indent,
                     break_long_words)
         soh = ""
-        chunk = chunk[m.offset+endof(c):end]
+        chunk = chunk[m.offset+lastindex(c):end]
     end
 
     cln, cll, bol, lcise = _put_chunk(chunk, out_str,
@@ -149,9 +155,9 @@ function _put_chunk(chunk::AbstractString, out_str,
     else
         while cll + lsoh + lchunk > width
             if width - cll - lsoh > 0
-                print(out_str, soh, chunk[1:chr2ind(chunk, width-cll-lsoh)], "\n",
+                print(out_str, soh, chunk[1:nextind(chunk, 0, width-cll-lsoh)], "\n",
                         subsequent_indent)
-                chunk = chunk[chr2ind(chunk, width-cll-lsoh+1):end]
+                chunk = chunk[nextind(chunk, 0, width-cll-lsoh+1):end]
                 lchunk = length(chunk)
             else
                 print(out_str, "\n", subsequent_indent)
@@ -168,7 +174,7 @@ function _put_chunk(chunk::AbstractString, out_str,
 
     # detect end-of-sentences
     _sentence_end_re = r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z"
-    lcise = ismatch(_sentence_end_re, chunk)
+    lcise = occursin(_sentence_end_re, chunk)
 
     return cln, cll, bol, lcise
 end
@@ -209,8 +215,8 @@ function wrap(text::AbstractString;
               break_long_words::Bool = true,
               break_on_hyphens::Bool = true)
 
-    # Reformat the single paragraph in 'text' so it fits in lines of
-    # no more than 'opts.width' columns, and return an AbstractString.
+    # Reformat the single paragraph in `text` so it fits in lines of
+    # no more than `width` columns, and return an AbstractString.
 
     # Sanity checks
     _check_width(width)
@@ -234,10 +240,10 @@ function wrap(text::AbstractString;
     # We iterate over the text, looking for whitespace
     # where to split.
     i = start(text)
-    l = endof(text)
+    l = lastindex(text)
     out_str = IOBuffer()
 
-    wsrng = search(text, r"\s+", i)
+    wsrng = coalesce(findnext(r"\s+", text, i), 0:-1)
     j = first(wsrng)
     k = last(wsrng) + 1
     while 0 < j <= l
@@ -245,7 +251,7 @@ function wrap(text::AbstractString;
             if i < j
                 # This is non-whitespace. We write it out according
                 # to the current cursor position and the leading space.
-                chunk = text[i:j-1]
+                chunk = text[i:prevind(text,j)]
 
                 cln, cll, bol, lcise = _put_chunks(chunk, out_str,
                             cln, cll, bol, soh,
@@ -258,8 +264,8 @@ function wrap(text::AbstractString;
         # This is whitespace. We mangle it (expand tabs, fix
         # sentence endings, replace it with single spaces) and
         # then we keep it on hold.
-        soh = text[j:k-1]
-        if expand_tabs && ismatch(r"\t", soh)
+        soh = text[j:prevind(text,k)]
+        if expand_tabs && occursin(r"\t", soh)
             soh = _expand_tabs(soh, cll)
         end
         if fix_sentence_endings && lcise && soh == " "
@@ -272,7 +278,7 @@ function wrap(text::AbstractString;
         # Continue the search
 
         k <= j && (k = nextind(text,j))
-        wsrng = search(text, r"\s+", k)
+        wsrng = coalesce(findnext(r"\s+", text, k), 0:-1)
         j = first(wsrng)
         k = last(wsrng) + 1
     end
@@ -299,7 +305,7 @@ function _print_wrapped(newline::Bool, args...; kwargs...)
         io = args[1]
         args = args[2:end]
     else
-        io = STDOUT
+        io = stdout
     end
 
     if !isempty(args)
