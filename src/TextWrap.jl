@@ -141,7 +141,7 @@ function _put_chunk(chunk::AbstractString, out_str,
     # does the chunk fit into next line? or are we
     # forced to put it there?
     elseif lchunk <= width - lsindent || !break_long_words
-        print(out_str, bol?"":"\n", subsequent_indent, chunk)
+        print(out_str, bol ? "" : "\n", subsequent_indent, chunk)
         cll = lsindent + lchunk
         cln += 1
         bol = false
@@ -271,12 +271,12 @@ function wrap(text::AbstractString;
 
         # Continue the search
 
-        if k <= j; k = nextind(text,j) end
+        k <= j && (k = nextind(text,j))
         wsrng = search(text, r"\s+", k)
         j = first(wsrng)
         k = last(wsrng) + 1
     end
-    if !done(text,i)
+    if !done(text, i)
         # Some non-whitespace is left at the end.
         chunk = text[i:end]
         cln, cll, bol = _put_chunks(chunk, out_str,
