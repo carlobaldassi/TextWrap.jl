@@ -239,11 +239,11 @@ function wrap(text::AbstractString;
 
     # We iterate over the text, looking for whitespace
     # where to split.
-    i = start(text)
+    i = firstindex(text)
     l = lastindex(text)
     out_str = IOBuffer()
 
-    wsrng = coalesce(findnext(r"\s+", text, i), 0:-1)
+    wsrng = something(findnext(r"\s+", text, i), 0:-1)
     j = first(wsrng)
     k = last(wsrng) + 1
     while 0 < j <= l
@@ -278,11 +278,11 @@ function wrap(text::AbstractString;
         # Continue the search
 
         k <= j && (k = nextind(text,j))
-        wsrng = coalesce(findnext(r"\s+", text, k), 0:-1)
+        wsrng = something(findnext(r"\s+", text, k), 0:-1)
         j = first(wsrng)
         k = last(wsrng) + 1
     end
-    if !done(text, i)
+    if i ≤ ncodeunits(text)
         # Some non-whitespace is left at the end.
         chunk = text[i:end]
         cln, cll, bol = _put_chunks(chunk, out_str,
