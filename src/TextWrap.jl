@@ -22,6 +22,9 @@ export
     print_wrapped,
     println_wrapped
 
+# A regex to match any sequence of spaces except non-breakable spaces (\xA0)
+const spaceregex = r"((?!\xA0)\s)+"
+
 function _expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
     i = i0 % 8
@@ -243,9 +246,10 @@ function wrap(text::AbstractString;
     l = lastindex(text)
     out_str = IOBuffer()
 
-    wsrng = something(findnext(r"\s+", text, i), 0:-1)
-    j = first(wsrng)
-    k = last(wsrng) + 1
+    wsrng = findnext(spaceregex, text, i)
+    j, k = wsrng ≢ nothing ?
+        (first(wsrng), nextind(text, last(wsrng))) :
+        (0, -1)
     while 0 < j <= l
         if i < k
             if i < j
@@ -278,9 +282,10 @@ function wrap(text::AbstractString;
         # Continue the search
 
         k <= j && (k = nextind(text,j))
-        wsrng = something(findnext(r"\s+", text, k), 0:-1)
-        j = first(wsrng)
-        k = last(wsrng) + 1
+        wsrng = findnext(spaceregex, text, k)
+        j, k = wsrng ≢ nothing ?
+            (first(wsrng), nextind(text, last(wsrng))) :
+            (0, -1)
     end
     if i ≤ ncodeunits(text)
         # Some non-whitespace is left at the end.
