@@ -2,7 +2,7 @@ using Documenter, TextWrap
 
 makedocs(
     modules  = [TextWrap],
-    format   = :html,
+    format = Documenter.HTML(prettyurls = "--local" ∉ ARGS),
     sitename = "TextWrap.jl",
     pages    = Any[
         "Home" => "index.md",
@@ -11,8 +11,4 @@ makedocs(
 
 deploydocs(
     repo   = "github.com/carlobaldassi/TextWrap.jl.git",
-    target = "build",
-    deps = nothing,
-    make = nothing,
-    julia  = "0.6"
 )
