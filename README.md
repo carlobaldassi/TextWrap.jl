@@ -1,8 +1,8 @@
 # TextWrap.jl
 
-| **Documentation**                                                               | **Build Status**                                             |
-|:-------------------------------------------------------------------------------:|:------------------------------------------------------------:|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url][![][codecov-img]][codecov-url] |
+| **Documentation**                                                         | **Build Status**                                             |
+|:-------------------------------------------------------------------------:|:------------------------------------------------------------:|
+| [![][docs-stable-img]][docs-stable-url] [![][docs-dev-img]][docs-dev-url] | [![][travis-img]][travis-url][![][codecov-img]][codecov-url] |
 
 This [Julia] package allows to wrap long lines of text to fit within a given width.
 
@@ -41,7 +41,7 @@ See the documentation for more advanced settings.
 ### Documentation
 
 - [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
-- [**LATEST**][docs-latest-url] &mdash; *in-development version of the documentation.*
+- [**DEV**][docs-dev-url] &mdash; *in-development version of the documentation.*
 
 ## Changes in release 1.0.0
 
@@ -51,11 +51,11 @@ See the documentation for more advanced settings.
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-stable-url]: https://carlobaldassi.github.io/TextWrap.jl/stable
-[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
-[docs-latest-url]: https://carlobaldassi.github.io/TextWrap.jl/latest
+[docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
+[docs-dev-url]: https://carlobaldassi.github.io/TextWrap.jl/dev
 
-[travis-img]: https://travis-ci.org/carlobaldassi/TextWrap.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/carlobaldassi/TextWrap.jl
+[travis-img]: https://travis-ci.com/carlobaldassi/TextWrap.jl.svg?branch=master
+[travis-url]: https://travis-ci.com/carlobaldassi/TextWrap.jl
 
 [codecov-img]: https://codecov.io/gh/carlobaldassi/TextWrap.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/carlobaldassi/TextWrap.jl
