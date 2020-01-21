@@ -1,9 +1,9 @@
 """
     TextWrap
 
-This module provides the function [`wrap`](@ref) which parses an input text
-and reorganizes its white space so that it can be printed with a fixed screen width, optionally indenting it.
-It also provides the two convenience functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
+This module provides the function [`wrap`](@ref) which parses an input text and reorganizes its
+white space so that it can be printed with a fixed screen width, optionally indenting it. It also
+provides the two convenience functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
 """
 module TextWrap
 
@@ -37,23 +37,19 @@ function _expand_tabs(text::AbstractString, i0::Int)
 end
 
 function _check_width(width::Integer)
-    if width <= 0
-        error("invalid width $width (must be > 0)")
-    end
+    width ≤ 0 && error("invalid width $width (must be > 0)")
     return true
 end
 function _check_indent(indent::Integer, width::Integer)
-    if indent < 0 || indent >= width
-        error("invalid intent $indent (must be an integer between 0 and width-1, or an AbstractString)")
-    end
+    0 ≤ indent < width ||
+        error("invalid intent $indent (must be an integer between 0 and width-1, " *
+              "or an AbstractString)")
     return true
 end
 function _check_indent(indent::AbstractString, width::Integer)
-    if length(indent) >= width
-        error("invalid intent (must be shorter than width-1)")
-    end
+    length(indent) ≥ width && error("invalid intent (must be shorter than width-1)")
+    return true
 end
-
 
 function _put_chunks(chunk::AbstractString, out_str,
                     cln, cll, bol, soh,
@@ -67,9 +63,7 @@ function _put_chunks(chunk::AbstractString, out_str,
 
     while break_on_hyphens
         m = match(_hyphen_re, chunk)
-        if m === nothing
-            break
-        end
+        m ≡ nothing && break
         c = m.match
         cln, cll, bol, lcise = _put_chunk(c, out_str,
                     cln, cll, bol, soh,
@@ -132,14 +126,13 @@ function _put_chunk(chunk::AbstractString, out_str,
 
     # is there enough room for the chunk? or is this the
     # beginning of the text and we cannot break words?
-    if cll + lsoh + lchunk <= width ||
-            (cln == 1 && bol && !break_long_words)
+    if cll + lsoh + lchunk ≤ width || (cln == 1 && bol && !break_long_words)
         print(out_str, soh, chunk)
         cll += lchunk + lsoh
         bol = false
-    # does the chunk fit into next line? or are we
+    # does the chunk fit into the next line? or are we
     # forced to put it there?
-    elseif lchunk <= width - lsindent || !break_long_words
+    elseif lchunk ≤ width - lsindent || !break_long_words
         print(out_str, bol ? "" : "\n", subsequent_indent, chunk)
         cll = lsindent + lchunk
         cln += 1
@@ -182,7 +175,7 @@ The behaviour can be controlled via optional keyword arguments:
 
 * `width` (deafult=`70`): the maximum width of the wrapped text, including indentation.
 * `initial_indent` (default=`""`): indentation of the first line. This can
-   be any string (shorter than `width`), or it can be an integer number (lower than `width`).
+   be any string (shorter than `width`), or it can be an integer number (smaller than `width`).
 * `subsequent_indent` (default=`""`): indentation of all lines except the first. Works the same as
    `initial_indent`.
 * `break_on_hyphens` (default=`true`): this flag determines whether words can be broken on hyphens,
@@ -192,11 +185,11 @@ The behaviour can be controlled via optional keyword arguments:
   width.
 * `replace_whitespace` (default=`true`): if this flag is `true`, all whitespace characters in the
   original text (including newlines) will be replaced by spaces.
-* `expand_tabs` (default=`true`): if this flag is `true`, tabs will be expanded in-place into spaces.
-  The expansion happens before whitespace replacement.
-* `fix_sentence_endings` (default=`false`): if this flag is `true`, the wrapper will try to recognize
-  sentence endings in the middle of a paragraph and put two spaces before the next sentence in case
-  only one is present.
+* `expand_tabs` (default=`true`): if this flag is `true`, tabs will be expanded in-place into
+  spaces. The expansion happens before whitespace replacement.
+* `fix_sentence_endings` (default=`false`): if this flag is `true`, the wrapper will try to
+  recognize sentence endings in the middle of a paragraph and put two spaces before the next
+  sentence in case only one is present.
 """
 function wrap(text::AbstractString;
               width::Int = 70,
@@ -216,10 +209,10 @@ function wrap(text::AbstractString;
     _check_indent(initial_indent, width)
     _check_indent(subsequent_indent, width)
 
-    if isa(initial_indent, Integer)
+    if initial_indent isa Integer
         initial_indent = " "^initial_indent
     end
-    if isa(subsequent_indent, Integer)
+    if subsequent_indent isa Integer
         subsequent_indent = " "^subsequent_indent
     end
 
@@ -240,7 +233,7 @@ function wrap(text::AbstractString;
     j, k = wsrng ≢ nothing ?
         (first(wsrng), nextind(text, last(wsrng))) :
         (0, -1)
-    while 0 < j <= l
+    while 0 < j ≤ l
         if i < k
             if i < j
                 # This is non-whitespace. We write it out according
@@ -271,7 +264,7 @@ function wrap(text::AbstractString;
 
         # Continue the search
 
-        k <= j && (k = nextind(text,j))
+        k ≤ j && (k = nextind(text,j))
         wsrng = findnext(spaceregex, text, k)
         j, k = wsrng ≢ nothing ?
             (first(wsrng), nextind(text, last(wsrng))) :
@@ -296,7 +289,7 @@ end
 #   all arguments are optional
 #
 function _print_wrapped(newline::Bool, args...; kwargs...)
-    if !isempty(args) && isa(args[1], IO)
+    if !isempty(args) && (args[1] isa IO)
         io = args[1]
         args = args[2:end]
     else
@@ -319,9 +312,9 @@ end
 """
     print_wrapped([io,] text...; keywords...)
 
-This is just like the standard `print` function (it prints multiple arguments and accepts
-an optional `IO` first argument), except that it wraps the result, and accepts keyword
-arguments to pass to [`wrap`](@ref).
+This is just like the standard `print` function (it prints multiple arguments and accepts an
+optional `IO` first argument), except that it wraps the result, and accepts keyword arguments to
+pass to [`wrap`](@ref).
 """
 print_wrapped(args...; kwargs...) = _print_wrapped(false, args...; kwargs...)
 
