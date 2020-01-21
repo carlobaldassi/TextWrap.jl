@@ -1,5 +1,3 @@
-__precompile__()
-
 """
     TextWrap
 
@@ -8,14 +6,6 @@ and reorganizes its white space so that it can be printed with a fixed screen wi
 It also provides the two convenience functions [`print_wrapped`](@ref) and [`println_wrapped`](@ref).
 """
 module TextWrap
-
-using Compat
-
-if VERSION < v"0.7.0-DEV.2949"
-    # horrible, but we don't need to reimplement all of the logic here
-    # TODO: remove it if Compat implements this...
-    Base.nextind(s, i, j) = (@assert i == 0; chr2ind(s, j))
-end
 
 export
     wrap,

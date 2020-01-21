@@ -25,19 +25,16 @@ than 20 characters.
 It's very similar to Python's textwrap module, but the interface is slightly different.
 
 
-## Installation
+### Installation and usage
 
-To install the module, use Julia's package manager:
+To install the module, use Julia's package manager: start pkg mode by pressing `]` and then enter:
 
 ```
-julia> Pkg.add("TextWrap")
+(v1.3) pkg> add TextWrap
 ```
 
 Dependencies will be installed automatically.
-
-## Usage
-
-The module is loaded like any other Julia module:
+The module can then be loaded like any other Julia module:
 
 ```
 julia> using TextWrap

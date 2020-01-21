@@ -1,13 +1,7 @@
 module TextWrapTest
 
 using TextWrap
-using Compat
-
-if VERSION < v"0.7.0-DEV.1995"
-    using Base.Test
-else
-    using Test
-end
+using Test
 
 text = """
     Julia is a high-level, high-performance dynamic programming language
@@ -383,4 +377,4 @@ end
 @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
 @test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
 
-end
+end # module
