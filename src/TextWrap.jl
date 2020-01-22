@@ -115,7 +115,9 @@ function _put_chunk(chunk::AbstractString, out_str,
     # go in front of chunk, and it may or may not be printed.
     # The rest are options.
 
-    elength = recognize_escapes ? ansi_length : length
+    # This is written as a new function rather than a function reference
+    # to help type inference
+    elength(s)::Int = recognize_escapes ? ansi_length(s) : length(s)
 
     liindent = elength(initial_indent)
     lsindent = elength(subsequent_indent)
@@ -237,15 +239,12 @@ function wrap(text::AbstractString;
     _check_indent(initial_indent, width)
     _check_indent(subsequent_indent, width)
 
-    if initial_indent isa Integer
-        initial_indent = " "^initial_indent
-    end
-    if subsequent_indent isa Integer
-        subsequent_indent = " "^subsequent_indent
-    end
+    iind::String = initial_indent isa Integer ? " "^initial_indent : initial_indent
+    sind::String = subsequent_indent isa Integer ? " "^subsequent_indent : subsequent_indent
+
 
     # whitespace-only case
-    occursin(r"^\s*$", text) && return initial_indent
+    occursin(r"^\s*$", text) && return iind
 
     # State variables initialization
     cln = 1 # current line number
@@ -274,7 +273,7 @@ function wrap(text::AbstractString;
 
                 cln, cll, bol, lcise = _put_chunks(chunk, out_str,
                             cln, cll, bol, soh,
-                            width, initial_indent, subsequent_indent,
+                            width, iind, sind,
                             break_on_hyphens, break_long_words,
                             recognize_escapes)
             end
@@ -310,7 +309,7 @@ function wrap(text::AbstractString;
         chunk = text[i:end]
         cln, cll, bol = _put_chunks(chunk, out_str,
                     cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
+                    width, iind, sind,
                     break_on_hyphens, break_long_words,
                     recognize_escapes)
     end
