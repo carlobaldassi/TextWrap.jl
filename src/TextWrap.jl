@@ -12,12 +12,9 @@ export
     print_wrapped,
     println_wrapped
 
-# A regex to match any sequence of spaces except non-breakable spaces (\xA0)
-const spaceregex = r"((?!\xA0)\s)+"
-
 ansi_length(s) = length(replace(s, r"\e\[[0-9]+m" => ""))
 
-function _expand_tabs(text::AbstractString, i0::Int)
+function apply_expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
     i = i0 % 8
     for c in text
@@ -38,154 +35,172 @@ function _expand_tabs(text::AbstractString, i0::Int)
     return String(take!(out_buf))
 end
 
-function _check_width(width::Integer)
-    width ≤ 0 && error("invalid width $width (must be > 0)")
+function check_width(width::Integer)
+    width ≤ 0 && throw(ArgumentError("invalid width $width (must be > 0)"))
     return true
 end
-function _check_indent(indent::Integer, width::Integer)
+function check_indent(indent::Integer, width::Integer)
     0 ≤ indent < width ||
-        error("invalid intent $indent (must be an integer between 0 and width-1, " *
-              "or an AbstractString)")
+        throw(ArgumentError("invalid intent $indent (must be an integer between 0 and width-1, " *
+                            "or an AbstractString)"))
     return true
 end
-function _check_indent(indent::AbstractString, width::Integer)
-    length(indent) ≥ width && error("invalid intent (must be shorter than width-1)")
+function check_indent(indent::AbstractString, width::Integer)
+    length(indent) ≥ width && throw(ArgumentError("invalid intent (must be shorter than width-1)"))
     return true
 end
 
-function _put_chunks(chunk::AbstractString, out_str,
-                    cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
-                    break_on_hyphens, break_long_words,
-                    recognize_escapes)
+mutable struct State
+    cln::Int    # current line number
+    cll::Int    # current line length
+    bol::Bool   # beginning of line?
+    lcise::Bool # last chunk is sentence ending
+    soh::String # space on hold
 
-    # This function just performs breaks-on-hyphens and passes
-    # individual chunks to _put_chunk
+    State() = new(1, 0, true, false, "")
+end
 
-    _hyphen_re = r"# define a class that matches sequences of word characters
-                   # and escape codes, arbitrarily mixed. It's then invoked
-                   # with the syntax (?&w)
-                   (?(DEFINE)
-                       (?<w> (?:\w|\e\[[0-9]+m)*)
-                   )
+struct Params
+    width::Int
+    iind::String    # initial indent
+    sind::String    # subsequent indent
+    exp_tabs::Bool  # expand tabs
+    rep_white::Bool # replace whitespace
+    fix_end::Bool   # fix sentence endings
+    brk_hyp::Bool   # break on hyphens
+    brk_long::Bool  # break long words
+    rec_esc::Bool   # recognize escapes
 
-                   # breakdown: 1) possible prefix (can consist of number-only words followed
-                   #               by a dash, possibly more than one);
-                   #            2) main body: requires at least a letter, includes the dash
-                   #            3) rest of the word: also requires at least a letter
-                   # notes: the ?: avoids group capturing
-                   #        the ?> avoids backtracking as soon as a \w or \p{L} is found
-                   #        the ?= is a lookahead
+    function Params(width::Integer,
+                    initial_indent::Union{Integer,AbstractString},
+                    subsequent_indent::Union{Integer,AbstractString},
+                    expand_tabs::Bool,
+                    replace_whitespace::Bool,
+                    fix_sentence_endings::Bool,
+                    break_on_hyphens::Bool,
+                    break_long_words::Bool,
+                    recognize_escapes::Bool
+                    )
+        check_width(width)
+        check_indent(initial_indent, width)
+        check_indent(subsequent_indent, width)
 
-                   ^(?:(?>(?&w)\p{N})(?&w)-)*?   # possible prefix
-                       (?>(?&w)\p{L})(?&w)-      # main body
-                    (?=(?>(?&w)\p{L})(?&w) )     # rest of the word
-                  "x
+        iind::String = initial_indent isa Integer ? " "^initial_indent : initial_indent
+        sind::String = subsequent_indent isa Integer ? " "^subsequent_indent : subsequent_indent
 
-    while break_on_hyphens
-        m = match(_hyphen_re, chunk)
+        return new(width, iind, sind, expand_tabs, replace_whitespace, fix_sentence_endings,
+                   break_on_hyphens, break_long_words, recognize_escapes)
+    end
+end
+
+# This function just performs breaks-on-hyphens and passes individual chunks to put_chunk!
+function put_chunks!(out_str::IOBuffer, chunk::AbstractString,
+                     s::State, p::Params)
+
+    hyphen_re = r"# define a class that matches sequences of word characters
+                  # and escape codes, arbitrarily mixed. It's then invoked
+                  # with the syntax (?&w)
+                  (?(DEFINE)
+                      (?<w> (?:\w|\e\[[0-9]+m)*)
+                  )
+
+                  # breakdown: 1) possible prefix (can consist of number-only words followed
+                  #               by a dash, possibly more than one);
+                  #            2) main body: requires at least a letter, includes the dash
+                  #            3) rest of the word: also requires at least a letter
+                  # notes: the ?: avoids group capturing
+                  #        the ?> avoids backtracking as soon as a \p{N} or \p{L} is found
+                  #        the ?= is a lookahead
+
+                  ^(?:(?>(?&w)\p{N})(?&w)-)*?   # possible prefix
+                      (?>(?&w)\p{L})(?&w)-      # main body
+                   (?=(?>(?&w)\p{L})(?&w) )     # rest of the word
+                 "x
+
+    while p.brk_hyp
+        m = match(hyphen_re, chunk)
         m ≡ nothing && break
         c = m.match
-        cln, cll, bol, lcise = _put_chunk(c, out_str,
-                    cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
-                    break_long_words, recognize_escapes)
-        soh = ""
+        put_chunk!(out_str, c, s, p)
+        s.soh = ""
         chunk = chunk[m.offset+lastindex(c):end]
     end
 
-    cln, cll, bol, lcise = _put_chunk(chunk, out_str,
-                cln, cll, bol, soh,
-                width, initial_indent, subsequent_indent,
-                break_long_words, recognize_escapes)
-    return cln, cll, bol, lcise
+    put_chunk!(out_str, chunk, s, p)
 end
 
-function _put_chunk(chunk::AbstractString, out_str,
-                    cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
-                    break_long_words, recognize_escapes)
+# Writes a chunk to out_str, based on the current state, and updates the state.
+# Besides the current position, encoded in (cln, cll, bol) = (current_line_number,
+# current_line_length, beginning_of_line), which gets updated, it also sets a flag
+# to signal that an end-of-sentence was detected.
+# The field s.soh (=space_on_hold) is the spacing which should go in front of chunk,
+# and it may be discarded when we're between lines.
+function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
+                    s::State, p::Params)
 
-    # Writes a chunk to out_str, based on the current position
-    # as encoded in (cln, cll, bol) = (current_line_number,
-    # current_line_length, beginning_of_line), and returns the
-    # updated position (plus a flag to signal that an end-of-sentence
-    # was detected).
-    # The argument soh (=space_on_hold) is the spacing which should
-    # go in front of chunk, and it may or may not be printed.
-    # The rest are options.
+    # This is written as a new function rather than a function reference
+    # to help type inference
+    elength(x)::Int = p.rec_esc ? ansi_length(x) : length(x)
 
-    elength = recognize_escapes ? ansi_length : length
-
-    liindent = elength(initial_indent)
-    lsindent = elength(subsequent_indent)
+    liind = elength(p.iind)
+    lsind = elength(p.sind)
     lchunk = elength(chunk)
-    lsoh = length(soh)
+    lsoh = length(s.soh)
 
-    if cll + lsoh > width
-        soh = ""
+    if s.cll + lsoh > p.width
+        s.soh = ""
         lsoh = 0
-        cll > 0 && print(out_str, "\n")
-        cln += 1
-        cll = 0
-        bol = true
+        s.cll > 0 && print(out_str, "\n")
+        s.cln += 1
+        s.cll = 0
+        s.bol = true
     end
 
-    if bol
-        if cln == 1
-            indent = initial_indent
-            lindent = liindent
-        else
-            indent = subsequent_indent
-            lindent = lsindent
-        end
-
-        print(out_str, indent)
-        cll += lindent
-
-        soh = ""
+    if s.bol
+        ind, lind = s.cln == 1 ? (p.iind, liind) : (p.sind, lsind)
+        print(out_str, ind)
+        s.cll += lind
+        s.soh = ""
         lsoh = 0
     end
 
-    # is there enough room for the chunk? or is this the
+    # Is there enough room for the chunk? or is this the
     # beginning of the text and we cannot break words?
-    if cll + lsoh + lchunk ≤ width || (cln == 1 && bol && !break_long_words)
-        print(out_str, soh, chunk)
-        cll += lchunk + lsoh
-        bol = false
-    # does the chunk fit into the next line? or are we
+    if s.cll + lsoh + lchunk ≤ p.width || (s.cln == 1 && s.bol && !p.brk_long)
+        print(out_str, s.soh, chunk)
+        s.cll += lchunk + lsoh
+        s.bol = false
+    # Does the chunk fit into the next line? or are we
     # forced to put it there?
-    elseif lchunk ≤ width - lsindent || !break_long_words
-        print(out_str, bol ? "" : "\n", subsequent_indent, chunk)
-        cll = lsindent + lchunk
-        cln += 1
-        bol = false
-    # break it until it fits
+    elseif lchunk ≤ p.width - lsind || !p.brk_long
+        print(out_str, s.bol ? "" : "\n", p.sind, chunk)
+        s.cll = lsind + lchunk
+        s.cln += 1
+        s.bol = false
+    # Break it until it fits
     else
-        while cll + lsoh + lchunk > width
-            if width - cll - lsoh > 0
-                print(out_str, soh, chunk[1:nextind(chunk, 0, width-cll-lsoh)], "\n",
-                        subsequent_indent)
-                chunk = chunk[nextind(chunk, 0, width-cll-lsoh+1):end]
+        while s.cll + lsoh + lchunk > p.width
+            if p.width - s.cll - lsoh > 0
+                print(out_str, s.soh, chunk[1:nextind(chunk, 0, p.width-s.cll-lsoh)], "\n", p.sind)
+                chunk = chunk[nextind(chunk, 0, p.width-s.cll-lsoh+1):end]
                 lchunk = elength(chunk)
             else
-                print(out_str, "\n", subsequent_indent)
+                print(out_str, "\n", p.sind)
             end
-            cll = lsindent
-            cln += 1
-            soh = ""
+            s.cll = lsind
+            s.cln += 1
+            s.soh = ""
             lsoh = 0
         end
         print(out_str, chunk)
-        cll += lchunk
-        bol = false
+        s.cll += lchunk
+        s.bol = false
     end
 
-    # detect end-of-sentences
-    _sentence_end_re = r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z"
-    lcise = occursin(_sentence_end_re, chunk)
+    # Detect end-of-sentences
+    s.lcise = occursin(r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z", chunk)
 
-    return cln, cll, bol, lcise
+    return out_str, s
 end
 
 """
@@ -229,33 +244,18 @@ function wrap(text::AbstractString;
               break_on_hyphens::Bool = true,
               recognize_escapes::Bool = true)
 
-    # Reformat the single paragraph in `text` so it fits in lines of
-    # no more than `width` columns, and return an AbstractString.
+    p = Params(width, initial_indent, subsequent_indent, expand_tabs, replace_whitespace,
+               fix_sentence_endings, break_on_hyphens, break_long_words, recognize_escapes)
 
-    # Sanity checks
-    _check_width(width)
-    _check_indent(initial_indent, width)
-    _check_indent(subsequent_indent, width)
+    # A regex to match any sequence of spaces except non-breakable spaces (\xA0)
+    spaceregex = r"((?!\xA0)\s)+"
 
-    if initial_indent isa Integer
-        initial_indent = " "^initial_indent
-    end
-    if subsequent_indent isa Integer
-        subsequent_indent = " "^subsequent_indent
-    end
+    # Whitespace-only case
+    occursin(r"^\s*$", text) && return p.iind
 
-    # whitespace-only case
-    occursin(r"^\s*$", text) && return initial_indent
+    s = State()
 
-    # State variables initialization
-    cln = 1 # current line number
-    cll = 0 # current line length
-    bol = true # beginning of line
-    lcise = false # last chunk is sentence ending
-    soh = "" # space on hold
-
-    # We iterate over the text, looking for whitespace
-    # where to split.
+    # We iterate over the text, looking for whitespace where to split.
     i = firstindex(text)
     l = lastindex(text)
     out_str = IOBuffer()
@@ -272,11 +272,7 @@ function wrap(text::AbstractString;
                 # to the current cursor position and the leading space.
                 chunk = text[i:prevind(text,j)]
 
-                cln, cll, bol, lcise = _put_chunks(chunk, out_str,
-                            cln, cll, bol, soh,
-                            width, initial_indent, subsequent_indent,
-                            break_on_hyphens, break_long_words,
-                            recognize_escapes)
+                put_chunks!(out_str, chunk, s, p)
             end
             i = k
         end
@@ -287,18 +283,18 @@ function wrap(text::AbstractString;
         soh = text[j:prevind(text,k)]
         @assert !isempty(soh)
         if expand_tabs && occursin(r"\t", soh)
-            soh = _expand_tabs(soh, cll)
+            soh = apply_expand_tabs(soh, s.cll)
         end
-        if fix_sentence_endings && lcise && soh == " "
+        if p.fix_end && s.lcise && soh == " "
             soh = "  "
         end
-        if replace_whitespace
+        if p.rep_white
             soh = replace(soh, "\n"=>"")
             soh = isempty(soh) ? " " : " "^length(soh)
         end
+        s.soh = soh
 
         # Continue the search
-
         k ≤ j && (k = nextind(text,j))
         wsrng = findnext(spaceregex, text, k)
         j, k = wsrng ≢ nothing ?
@@ -308,41 +304,9 @@ function wrap(text::AbstractString;
     if i ≤ ncodeunits(text)
         # Some non-whitespace is left at the end.
         chunk = text[i:end]
-        cln, cll, bol = _put_chunks(chunk, out_str,
-                    cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
-                    break_on_hyphens, break_long_words,
-                    recognize_escapes)
+        put_chunks!(out_str, chunk, s, p)
     end
     return String(take!(out_str))
-end
-
-# print functions signature:
-#   first arg: IO
-#   last arg: Options
-#   inbetween: anything printable
-#
-#   all arguments are optional
-#
-function _print_wrapped(newline::Bool, args...; kwargs...)
-    if !isempty(args) && (args[1] isa IO)
-        io = args[1]
-        args = args[2:end]
-    else
-        io = stdout
-    end
-
-    if !isempty(args)
-        ws = wrap(string(args...); kwargs...)
-    else
-        ws = wrap(""; kwargs...)
-    end
-
-    if newline
-        println(io, ws)
-    else
-        print(io, ws)
-    end
 end
 
 """
@@ -352,13 +316,20 @@ This is just like the standard `print` function (it prints multiple arguments an
 optional `IO` first argument), except that it wraps the result, and accepts keyword arguments to
 pass to [`wrap`](@ref).
 """
-print_wrapped(args...; kwargs...) = _print_wrapped(false, args...; kwargs...)
+print_wrapped(io::IO, text::AbstractString; kwargs...) = print(io, wrap(text; kwargs...))
+print_wrapped(args...; kwargs...) = print_wrapped(stdout, args...; kwargs...)
+print_wrapped(io::IO; kwargs...) = print_wrapped(io, ""; kwargs...)
+print_wrapped(io::IO, args...; kwargs...) = print_wrapped(io, string(args...); kwargs...)
 
 """
     println_wrapped([io,] text...; keywords...)
 
 Like [`print_wrapped`](@ref), but adds a newline at the end.
 """
-println_wrapped(args...; kwargs...) = _print_wrapped(true, args...; kwargs...)
+function println_wrapped(io::IO, args...; kwargs...)
+    print_wrapped(io, args...; kwargs...)
+    print(io, "\n")
+end
+println_wrapped(args...; kwargs...) = println_wrapped(stdout, args...; kwargs...)
 
 end # module TextWrap

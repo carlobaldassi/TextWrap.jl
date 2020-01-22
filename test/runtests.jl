@@ -463,6 +463,31 @@ try
     @test read(tmpf, String) == ""
 
     open(tmpf, "w") do f
+        print_wrapped(f, "abc", "def")
+    end
+    @test read(tmpf, String) == "abcdef"
+
+    open(tmpf, "w") do f
+        println_wrapped(f, "abc", "def")
+    end
+    @test read(tmpf, String) == "abcdef\n"
+
+    open(tmpf, "w") do f
+        redirect_stdout(f) do
+            print_wrapped("abc", "def")
+        end
+    end
+    @test read(tmpf, String) == "abcdef"
+
+    open(tmpf, "w") do f
+        redirect_stdout(f) do
+            println_wrapped("abc", "def")
+        end
+    end
+    @test read(tmpf, String) == "abcdef\n"
+
+
+    open(tmpf, "w") do f
         print_wrapped(f, text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
     end
     @test read(tmpf, String) == """
@@ -532,11 +557,11 @@ end # testset
 
 @testset "argument checks" begin
 
-@test_throws ErrorException wrap("", width=0)
-@test_throws ErrorException wrap("", initial_indent=10, width=10)
-@test_throws ErrorException wrap("", subsequent_indent=10, width=10)
-@test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
-@test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
+@test_throws ArgumentError wrap("", width=0)
+@test_throws ArgumentError wrap("", initial_indent=10, width=10)
+@test_throws ArgumentError wrap("", subsequent_indent=10, width=10)
+@test_throws ArgumentError wrap("", initial_indent="~~~~~~~~~~", width=10)
+@test_throws ArgumentError wrap("", subsequent_indent="~~~~~~~~~~", width=10)
 
 end # testset
 
