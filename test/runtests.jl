@@ -3,7 +3,9 @@ module TextWrapTest
 using TextWrap
 using Test
 
-text = """
+@testset "plain" begin
+
+global text = """
     Julia is a high-level, high-performance dynamic programming language
     for technical computing, with syntax that is familiar to users of
     other technical computing environments. It provides a sophisticated
@@ -73,6 +75,10 @@ text = """
     > and an extensive mathematical
     > function library."""
 
+end # testset
+
+@testset "tabs" begin
+
 tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
 
 @test wrap(tabtext, width=20, replace_whitespace=true,  expand_tabs=true) ==
@@ -83,6 +89,10 @@ tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
     "aaaaaaa bbbbbbb\ncccccc ddddd eeee\nfff gg h"
 @test wrap(tabtext, width=20, replace_whitespace=false, expand_tabs=false) ==
     "aaaaaaa\tbbbbbbb\ncccccc\tddddd\teeee\nfff\tgg\th"
+
+end # testset
+
+@testset "long words" begin
 
 longwordstext = """
     The 45-letter word pneumonoultramicroscopicsilicovolcanoconiosis is the longest English word that appears in a major dictionary. A 79 letter word,
@@ -304,6 +314,108 @@ longwordstext = """
     encyclopedias will
     have....'"""
 
+end # testset
+
+@testset "escape codes" begin
+
+N = Base.text_colors[:normal]
+U = Base.text_colors[:underline]
+B = Base.text_colors[:bold]
+R = Base.text_colors[:reverse]
+
+r = N * Base.text_colors[:red]
+b = N * U * Base.text_colors[:light_blue]
+y = N * B * Base.text_colors[:light_yellow]
+m = N * B * R * Base.text_colors[:light_magenta]
+
+etext = """
+    Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-performance$(N) dynamic programming language
+    for technical computing, with syntax that is familiar to users of
+    other technical computing environments. It provides a $(y)sophisticated$(N)
+    compiler, distributed parallel execution, numerical accuracy, and an
+    $(m)extensive mathematical function library$(N)."""
+
+@test wrap(etext) == """
+    Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-performance$(N) dynamic programming language
+    for technical computing, with syntax that is familiar to users of
+    other technical computing environments. It provides a $(y)sophisticated$(N)
+    compiler, distributed parallel execution, numerical accuracy, and an
+    $(m)extensive mathematical function library$(N)."""
+
+@test wrap(etext, width=30) == """
+    Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-
+    performance$(N) dynamic
+    programming language for
+    technical computing, with
+    syntax that is familiar to
+    users of other technical
+    computing environments. It
+    provides a $(y)sophisticated$(N)
+    compiler, distributed parallel
+    execution, numerical accuracy,
+    and an $(m)extensive mathematical
+    function library$(N)."""
+
+@test wrap(etext, width=30, fix_sentence_endings=true, break_on_hyphens=false) == """
+    Julia is a $(r)high-level$(N),
+    $(b)$(B)high$(b)-performance$(N) dynamic
+    programming language for
+    technical computing, with
+    syntax that is familiar to
+    users of other technical
+    computing environments.  It
+    provides a $(y)sophisticated$(N)
+    compiler, distributed parallel
+    execution, numerical accuracy,
+    and an $(m)extensive mathematical
+    function library$(N)."""
+
+@test wrap(etext, width=30, initial_indent=2, subsequent_indent=0) == """
+      Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-
+    performance$(N) dynamic
+    programming language for
+    technical computing, with
+    syntax that is familiar to
+    users of other technical
+    computing environments. It
+    provides a $(y)sophisticated$(N)
+    compiler, distributed parallel
+    execution, numerical accuracy,
+    and an $(m)extensive mathematical
+    function library$(N)."""
+
+@test wrap(etext, width=32, initial_indent=">   ", subsequent_indent="> ") == """
+    >   Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-
+    > performance$(N) dynamic
+    > programming language for
+    > technical computing, with
+    > syntax that is familiar to
+    > users of other technical
+    > computing environments. It
+    > provides a $(y)sophisticated$(N)
+    > compiler, distributed parallel
+    > execution, numerical accuracy,
+    > and an $(m)extensive mathematical
+    > function library$(N)."""
+
+@test wrap(etext, width=35, recognize_escapes=false) == """
+    Julia is a $(r)high-level$(N),
+    $(b)$(B)high$(b)-
+    performance$(N) dynamic programming
+    language for technical computing,
+    with syntax that is familiar to
+    users of other technical computing
+    environments. It provides a
+    $(y)sophisticated$(N)
+    compiler, distributed parallel
+    execution, numerical accuracy, and
+    an $(m)extensive
+    mathematical function library$(N)."""
+
+end # testset
+
+@testset "print" begin
+
 tmpf = tempname()
 try
     open(tmpf, "w") do f
@@ -372,9 +484,16 @@ finally
     isfile(tmpf) && rm(tmpf)
 end
 
+end # testset
+
+@testset "argument checks" begin
+
 @test_throws ErrorException wrap("", initial_indent=10, width=10)
 @test_throws ErrorException wrap("", subsequent_indent=10, width=10)
 @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
 @test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
+
+end # testset
+
 
 end # module

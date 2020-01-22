@@ -15,6 +15,8 @@ export
 # A regex to match any sequence of spaces except non-breakable spaces (\xA0)
 const spaceregex = r"((?!\xA0)\s)+"
 
+ansi_length(s) = length(replace(s, r"\e\[[0-9]+m" => ""))
+
 function _expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
     i = i0 % 8
@@ -54,12 +56,31 @@ end
 function _put_chunks(chunk::AbstractString, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
-                    break_on_hyphens, break_long_words)
+                    break_on_hyphens, break_long_words,
+                    recognize_escapes)
 
     # This function just performs breaks-on-hyphens and passes
     # individual chunks to _put_chunk
 
-    _hyphen_re = r"^(\w+-)*?\w+[^0-9\W]+-(?=\w+[^0-9\W])"
+    _hyphen_re = r"# define a class that matches sequences of word characters
+                   # and escape codes, arbitrarily mixed. It's then invoked
+                   # with the syntax (?&w)
+                   (?(DEFINE)
+                       (?<w> (?:\w|\e\[[0-9]+m)*)
+                   )
+
+                   # breakdown: 1) possible prefix (can consist of number-only words followed
+                   #               by a dash, possibly more than one);
+                   #            2) main body: requires at least a letter, includes the dash
+                   #            3) rest of the word: also requires at least a letter
+                   # notes: the ?: avoids group capturing
+                   #        the ?> avoids backtracking as soon as a \w or \p{L} is found
+                   #        the ?= is a lookahead
+
+                   ^(?:(?>(?&w)\p{N})(?&w)-)*?   # possible prefix
+                       (?>(?&w)\p{L})(?&w)-      # main body
+                    (?=(?>(?&w)\p{L})(?&w) )     # rest of the word
+                  "x
 
     while break_on_hyphens
         m = match(_hyphen_re, chunk)
@@ -68,7 +89,7 @@ function _put_chunks(chunk::AbstractString, out_str,
         cln, cll, bol, lcise = _put_chunk(c, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
-                    break_long_words)
+                    break_long_words, recognize_escapes)
         soh = ""
         chunk = chunk[m.offset+lastindex(c):end]
     end
@@ -76,14 +97,14 @@ function _put_chunks(chunk::AbstractString, out_str,
     cln, cll, bol, lcise = _put_chunk(chunk, out_str,
                 cln, cll, bol, soh,
                 width, initial_indent, subsequent_indent,
-                break_long_words)
+                break_long_words, recognize_escapes)
     return cln, cll, bol, lcise
 end
 
 function _put_chunk(chunk::AbstractString, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
-                    break_long_words)
+                    break_long_words, recognize_escapes)
 
     # Writes a chunk to out_str, based on the current position
     # as encoded in (cln, cll, bol) = (current_line_number,
@@ -94,9 +115,11 @@ function _put_chunk(chunk::AbstractString, out_str,
     # go in front of chunk, and it may or may not be printed.
     # The rest are options.
 
-    liindent = length(initial_indent)
-    lsindent = length(subsequent_indent)
-    lchunk = length(chunk)
+    elength = recognize_escapes ? ansi_length : length
+
+    liindent = elength(initial_indent)
+    lsindent = elength(subsequent_indent)
+    lchunk = elength(chunk)
     lsoh = length(soh)
 
     if cll + lsoh > width
@@ -144,7 +167,7 @@ function _put_chunk(chunk::AbstractString, out_str,
                 print(out_str, soh, chunk[1:nextind(chunk, 0, width-cll-lsoh)], "\n",
                         subsequent_indent)
                 chunk = chunk[nextind(chunk, 0, width-cll-lsoh+1):end]
-                lchunk = length(chunk)
+                lchunk = elength(chunk)
             else
                 print(out_str, "\n", subsequent_indent)
             end
@@ -190,6 +213,9 @@ The behaviour can be controlled via optional keyword arguments:
 * `fix_sentence_endings` (default=`false`): if this flag is `true`, the wrapper will try to
   recognize sentence endings in the middle of a paragraph and put two spaces before the next
   sentence in case only one is present.
+* `recognize_escapes` (default=`true`): if `true`, compute all lengths ignoring ANSI escape codes
+  (special character sequences used e.g. to modify the text color or other properties; they look
+  e.g. like `\"\\e[94m\"`)
 """
 function wrap(text::AbstractString;
               width::Int = 70,
@@ -199,7 +225,8 @@ function wrap(text::AbstractString;
               replace_whitespace::Bool = true,
               fix_sentence_endings::Bool = false,
               break_long_words::Bool = true,
-              break_on_hyphens::Bool = true)
+              break_on_hyphens::Bool = true,
+              recognize_escapes::Bool = true)
 
     # Reformat the single paragraph in `text` so it fits in lines of
     # no more than `width` columns, and return an AbstractString.
@@ -243,7 +270,8 @@ function wrap(text::AbstractString;
                 cln, cll, bol, lcise = _put_chunks(chunk, out_str,
                             cln, cll, bol, soh,
                             width, initial_indent, subsequent_indent,
-                            break_on_hyphens, break_long_words)
+                            break_on_hyphens, break_long_words,
+                            recognize_escapes)
             end
             i = k
         end
@@ -276,7 +304,8 @@ function wrap(text::AbstractString;
         cln, cll, bol = _put_chunks(chunk, out_str,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
-                    break_on_hyphens, break_long_words)
+                    break_on_hyphens, break_long_words,
+                    recognize_escapes)
     end
     return String(take!(out_str))
 end
