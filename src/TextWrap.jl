@@ -315,34 +315,6 @@ function wrap(text::AbstractString;
     return String(take!(out_str))
 end
 
-# print functions signature:
-#   first arg: IO
-#   last arg: Options
-#   inbetween: anything printable
-#
-#   all arguments are optional
-#
-function _print_wrapped(newline::Bool, args...; kwargs...)
-    if !isempty(args) && (args[1] isa IO)
-        io = args[1]
-        args = args[2:end]
-    else
-        io = stdout
-    end
-
-    if !isempty(args)
-        ws = wrap(string(args...); kwargs...)
-    else
-        ws = wrap(""; kwargs...)
-    end
-
-    if newline
-        println(io, ws)
-    else
-        print(io, ws)
-    end
-end
-
 """
     print_wrapped([io,] text...; keywords...)
 
@@ -350,13 +322,20 @@ This is just like the standard `print` function (it prints multiple arguments an
 optional `IO` first argument), except that it wraps the result, and accepts keyword arguments to
 pass to [`wrap`](@ref).
 """
-print_wrapped(args...; kwargs...) = _print_wrapped(false, args...; kwargs...)
+print_wrapped(io::IO, text::AbstractString; kwargs...) = print(io, wrap(text; kwargs...))
+print_wrapped(args...; kwargs...) = print_wrapped(stdout, args...; kwargs...)
+print_wrapped(io::IO; kwargs...) = print_wrapped(io, ""; kwargs...)
+print_wrapped(io::IO, args...; kwargs...) = print_wrapped(io, string(args...); kwargs...)
 
 """
     println_wrapped([io,] text...; keywords...)
 
 Like [`print_wrapped`](@ref), but adds a newline at the end.
 """
-println_wrapped(args...; kwargs...) = _print_wrapped(true, args...; kwargs...)
+function println_wrapped(io::IO, args...; kwargs...)
+    print_wrapped(io, args...; kwargs...)
+    print(io, "\n")
+end
+println_wrapped(args...; kwargs...) = println_wrapped(stdout, args...; kwargs...)
 
 end # module TextWrap
