@@ -93,11 +93,9 @@ struct Params
     end
 end
 
+# This function just performs breaks-on-hyphens and passes individual chunks to put_chunk!
 function put_chunks!(out_str::IOBuffer, chunk::AbstractString,
                      s::State, p::Params)
-
-    # This function just performs breaks-on-hyphens and passes
-    # individual chunks to put_chunk!
 
     hyphen_re = r"# define a class that matches sequences of word characters
                   # and escape codes, arbitrarily mixed. It's then invoked
@@ -131,17 +129,14 @@ function put_chunks!(out_str::IOBuffer, chunk::AbstractString,
     put_chunk!(out_str, chunk, s, p)
 end
 
+# Writes a chunk to out_str, based on the current state, and updates the state.
+# Besides the current position, encoded in (cln, cll, bol) = (current_line_number,
+# current_line_length, beginning_of_line), which gets updated, it also sets a flag
+# to signal that an end-of-sentence was detected.
+# The field s.soh (=space_on_hold) is the spacing which should go in front of chunk,
+# and it may be discarded when we're between lines.
 function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
                     s::State, p::Params)
-
-    # Writes a chunk to out_str, based on the current state,
-    # and updates the state. Besides the current position,
-    # encoded in (cln, cll, bol) = (current_line_number,
-    # current_line_length, beginning_of_line), which gets
-    # updated, it also sets a flag to signal that an end-of-sentence
-    # was detected.
-    # The field s.soh (=space_on_hold) is the spacing which should
-    # go in front of chunk, and it may or may not be printed.
 
     # This is written as a new function rather than a function reference
     # to help type inference
@@ -169,20 +164,20 @@ function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
         lsoh = 0
     end
 
-    # is there enough room for the chunk? or is this the
+    # Is there enough room for the chunk? or is this the
     # beginning of the text and we cannot break words?
     if s.cll + lsoh + lchunk ≤ p.width || (s.cln == 1 && s.bol && !p.brk_long)
         print(out_str, s.soh, chunk)
         s.cll += lchunk + lsoh
         s.bol = false
-    # does the chunk fit into the next line? or are we
+    # Does the chunk fit into the next line? or are we
     # forced to put it there?
     elseif lchunk ≤ p.width - lsind || !p.brk_long
         print(out_str, s.bol ? "" : "\n", p.sind, chunk)
         s.cll = lsind + lchunk
         s.cln += 1
         s.bol = false
-    # break it until it fits
+    # Break it until it fits
     else
         while s.cll + lsoh + lchunk > p.width
             if p.width - s.cll - lsoh > 0
@@ -202,7 +197,7 @@ function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
         s.bol = false
     end
 
-    # detect end-of-sentences
+    # Detect end-of-sentences
     s.lcise = occursin(r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z", chunk)
 
     return out_str, s
@@ -255,7 +250,7 @@ function wrap(text::AbstractString;
     # A regex to match any sequence of spaces except non-breakable spaces (\xA0)
     spaceregex = r"((?!\xA0)\s)+"
 
-    # whitespace-only case
+    # Whitespace-only case
     occursin(r"^\s*$", text) && return p.iind
 
     s = State()
@@ -300,7 +295,6 @@ function wrap(text::AbstractString;
         s.soh = soh
 
         # Continue the search
-
         k ≤ j && (k = nextind(text,j))
         wsrng = findnext(spaceregex, text, k)
         j, k = wsrng ≢ nothing ?
