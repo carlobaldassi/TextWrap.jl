@@ -125,7 +125,7 @@ function _put_chunk(chunk::AbstractString, out_str,
     if cll + lsoh > width
         soh = ""
         lsoh = 0
-        print(out_str, "\n")
+        cll > 0 && print(out_str, "\n")
         cln += 1
         cll = 0
         bol = true
@@ -209,7 +209,8 @@ The behaviour can be controlled via optional keyword arguments:
 * `replace_whitespace` (default=`true`): if this flag is `true`, all whitespace characters in the
   original text (including newlines) will be replaced by spaces.
 * `expand_tabs` (default=`true`): if this flag is `true`, tabs will be expanded in-place into
-  spaces. The expansion happens before whitespace replacement.
+  spaces. Otherwise a tab is counted as a single character. The expansion happens before whitespace
+  replacement.
 * `fix_sentence_endings` (default=`false`): if this flag is `true`, the wrapper will try to
   recognize sentence endings in the middle of a paragraph and put two spaces before the next
   sentence in case only one is present.
@@ -243,6 +244,9 @@ function wrap(text::AbstractString;
         subsequent_indent = " "^subsequent_indent
     end
 
+    # whitespace-only case
+    occursin(r"^\s*$", text) && return initial_indent
+
     # State variables initialization
     cln = 1 # current line number
     cll = 0 # current line length
@@ -260,6 +264,7 @@ function wrap(text::AbstractString;
     j, k = wsrng ≢ nothing ?
         (first(wsrng), nextind(text, last(wsrng))) :
         (0, -1)
+
     while 0 < j ≤ l
         if i < k
             if i < j
@@ -280,6 +285,7 @@ function wrap(text::AbstractString;
         # sentence endings, replace it with single spaces) and
         # then we keep it on hold.
         soh = text[j:prevind(text,k)]
+        @assert !isempty(soh)
         if expand_tabs && occursin(r"\t", soh)
             soh = _expand_tabs(soh, cll)
         end
@@ -287,7 +293,8 @@ function wrap(text::AbstractString;
             soh = "  "
         end
         if replace_whitespace
-            soh = " "^length(soh)
+            soh = replace(soh, "\n"=>"")
+            soh = isempty(soh) ? " " : " "^length(soh)
         end
 
         # Continue the search
@@ -328,7 +335,7 @@ function _print_wrapped(newline::Bool, args...; kwargs...)
     if !isempty(args)
         ws = wrap(string(args...); kwargs...)
     else
-        ws = ""
+        ws = wrap(""; kwargs...)
     end
 
     if newline
