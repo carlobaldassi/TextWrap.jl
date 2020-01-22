@@ -14,7 +14,7 @@ export
 
 ansi_length(s) = length(replace(s, r"\e\[[0-9]+m" => ""))
 
-function _expand_tabs(text::AbstractString, i0::Int)
+function apply_expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
     i = i0 % 8
     for c in text
@@ -35,55 +35,55 @@ function _expand_tabs(text::AbstractString, i0::Int)
     return String(take!(out_buf))
 end
 
-function _check_width(width::Integer)
+function check_width(width::Integer)
     width ≤ 0 && throw(ArgumentError("invalid width $width (must be > 0)"))
     return true
 end
-function _check_indent(indent::Integer, width::Integer)
+function check_indent(indent::Integer, width::Integer)
     0 ≤ indent < width ||
         throw(ArgumentError("invalid intent $indent (must be an integer between 0 and width-1, " *
                             "or an AbstractString)"))
     return true
 end
-function _check_indent(indent::AbstractString, width::Integer)
+function check_indent(indent::AbstractString, width::Integer)
     length(indent) ≥ width && throw(ArgumentError("invalid intent (must be shorter than width-1)"))
     return true
 end
 
-function _put_chunks(chunk::AbstractString, out_str,
-                    cln, cll, bol, soh,
-                    width, initial_indent, subsequent_indent,
-                    break_on_hyphens, break_long_words,
-                    recognize_escapes)
+function put_chunks!(out_str::IOBuffer, chunk::AbstractString,
+                     cln, cll, bol, soh,
+                     width, initial_indent, subsequent_indent,
+                     break_on_hyphens, break_long_words,
+                     recognize_escapes)
 
     # This function just performs breaks-on-hyphens and passes
-    # individual chunks to _put_chunk
+    # individual chunks to put_chunk!
 
-    _hyphen_re = r"# define a class that matches sequences of word characters
-                   # and escape codes, arbitrarily mixed. It's then invoked
-                   # with the syntax (?&w)
-                   (?(DEFINE)
-                       (?<w> (?:\w|\e\[[0-9]+m)*)
-                   )
+    hyphen_re = r"# define a class that matches sequences of word characters
+                  # and escape codes, arbitrarily mixed. It's then invoked
+                  # with the syntax (?&w)
+                  (?(DEFINE)
+                      (?<w> (?:\w|\e\[[0-9]+m)*)
+                  )
 
-                   # breakdown: 1) possible prefix (can consist of number-only words followed
-                   #               by a dash, possibly more than one);
-                   #            2) main body: requires at least a letter, includes the dash
-                   #            3) rest of the word: also requires at least a letter
-                   # notes: the ?: avoids group capturing
-                   #        the ?> avoids backtracking as soon as a \w or \p{L} is found
-                   #        the ?= is a lookahead
+                  # breakdown: 1) possible prefix (can consist of number-only words followed
+                  #               by a dash, possibly more than one);
+                  #            2) main body: requires at least a letter, includes the dash
+                  #            3) rest of the word: also requires at least a letter
+                  # notes: the ?: avoids group capturing
+                  #        the ?> avoids backtracking as soon as a \w or \p{L} is found
+                  #        the ?= is a lookahead
 
-                   ^(?:(?>(?&w)\p{N})(?&w)-)*?   # possible prefix
-                       (?>(?&w)\p{L})(?&w)-      # main body
-                    (?=(?>(?&w)\p{L})(?&w) )     # rest of the word
-                  "x
+                  ^(?:(?>(?&w)\p{N})(?&w)-)*?   # possible prefix
+                      (?>(?&w)\p{L})(?&w)-      # main body
+                   (?=(?>(?&w)\p{L})(?&w) )     # rest of the word
+                 "x
 
     while break_on_hyphens
-        m = match(_hyphen_re, chunk)
+        m = match(hyphen_re, chunk)
         m ≡ nothing && break
         c = m.match
-        cln, cll, bol, lcise = _put_chunk(c, out_str,
+        cln, cll, bol, lcise = put_chunk!(out_str, c,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
                     break_long_words, recognize_escapes)
@@ -91,14 +91,14 @@ function _put_chunks(chunk::AbstractString, out_str,
         chunk = chunk[m.offset+lastindex(c):end]
     end
 
-    cln, cll, bol, lcise = _put_chunk(chunk, out_str,
+    cln, cll, bol, lcise = put_chunk!(out_str, chunk,
                 cln, cll, bol, soh,
                 width, initial_indent, subsequent_indent,
                 break_long_words, recognize_escapes)
     return cln, cll, bol, lcise
 end
 
-function _put_chunk(chunk::AbstractString, out_str,
+function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
                     cln, cll, bol, soh,
                     width, initial_indent, subsequent_indent,
                     break_long_words, recognize_escapes)
@@ -231,9 +231,9 @@ function wrap(text::AbstractString;
     # no more than `width` columns, and return an AbstractString.
 
     # Sanity checks
-    _check_width(width)
-    _check_indent(initial_indent, width)
-    _check_indent(subsequent_indent, width)
+    check_width(width)
+    check_indent(initial_indent, width)
+    check_indent(subsequent_indent, width)
 
     iind::String = initial_indent isa Integer ? " "^initial_indent : initial_indent
     sind::String = subsequent_indent isa Integer ? " "^subsequent_indent : subsequent_indent
@@ -269,7 +269,7 @@ function wrap(text::AbstractString;
                 # to the current cursor position and the leading space.
                 chunk = text[i:prevind(text,j)]
 
-                cln, cll, bol, lcise = _put_chunks(chunk, out_str,
+                cln, cll, bol, lcise = put_chunks!(out_str, chunk,
                             cln, cll, bol, soh,
                             width, iind, sind,
                             break_on_hyphens, break_long_words,
@@ -284,7 +284,7 @@ function wrap(text::AbstractString;
         soh = text[j:prevind(text,k)]
         @assert !isempty(soh)
         if expand_tabs && occursin(r"\t", soh)
-            soh = _expand_tabs(soh, cll)
+            soh = apply_expand_tabs(soh, cll)
         end
         if fix_sentence_endings && lcise && soh == " "
             soh = "  "
@@ -305,7 +305,7 @@ function wrap(text::AbstractString;
     if i ≤ ncodeunits(text)
         # Some non-whitespace is left at the end.
         chunk = text[i:end]
-        cln, cll, bol = _put_chunks(chunk, out_str,
+        cln, cll, bol = put_chunks!(out_str, chunk,
                     cln, cll, bol, soh,
                     width, iind, sind,
                     break_on_hyphens, break_long_words,
