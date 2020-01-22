@@ -3,7 +3,9 @@ module TextWrapTest
 using TextWrap
 using Test
 
-text = """
+@testset "plain" begin
+
+global text = """
     Julia is a high-level, high-performance dynamic programming language
     for technical computing, with syntax that is familiar to users of
     other technical computing environments. It provides a sophisticated
@@ -73,6 +75,10 @@ text = """
     > and an extensive mathematical
     > function library."""
 
+end # testset
+
+@testset "tabs" begin
+
 tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
 
 @test wrap(tabtext, width=20, replace_whitespace=true,  expand_tabs=true) ==
@@ -83,6 +89,10 @@ tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
     "aaaaaaa bbbbbbb\ncccccc ddddd eeee\nfff gg h"
 @test wrap(tabtext, width=20, replace_whitespace=false, expand_tabs=false) ==
     "aaaaaaa\tbbbbbbb\ncccccc\tddddd\teeee\nfff\tgg\th"
+
+end # testset
+
+@testset "long words" begin
 
 longwordstext = """
     The 45-letter word pneumonoultramicroscopicsilicovolcanoconiosis is the longest English word that appears in a major dictionary. A 79 letter word,
@@ -304,6 +314,10 @@ longwordstext = """
     encyclopedias will
     have....'"""
 
+end # testset
+
+@testset "print" begin
+
 tmpf = tempname()
 try
     open(tmpf, "w") do f
@@ -372,9 +386,16 @@ finally
     isfile(tmpf) && rm(tmpf)
 end
 
+end # testset
+
+@testset "argument checks" begin
+
 @test_throws ErrorException wrap("", initial_indent=10, width=10)
 @test_throws ErrorException wrap("", subsequent_indent=10, width=10)
 @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
 @test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
+
+end # testset
+
 
 end # module
