@@ -36,17 +36,17 @@ function _expand_tabs(text::AbstractString, i0::Int)
 end
 
 function _check_width(width::Integer)
-    width ≤ 0 && error("invalid width $width (must be > 0)")
+    width ≤ 0 && throw(ArgumentError("invalid width $width (must be > 0)"))
     return true
 end
 function _check_indent(indent::Integer, width::Integer)
     0 ≤ indent < width ||
-        error("invalid intent $indent (must be an integer between 0 and width-1, " *
-              "or an AbstractString)")
+        throw(ArgumentError("invalid intent $indent (must be an integer between 0 and width-1, " *
+                            "or an AbstractString)"))
     return true
 end
 function _check_indent(indent::AbstractString, width::Integer)
-    length(indent) ≥ width && error("invalid intent (must be shorter than width-1)")
+    length(indent) ≥ width && throw(ArgumentError("invalid intent (must be shorter than width-1)"))
     return true
 end
 

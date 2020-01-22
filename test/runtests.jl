@@ -532,11 +532,11 @@ end # testset
 
 @testset "argument checks" begin
 
-@test_throws ErrorException wrap("", width=0)
-@test_throws ErrorException wrap("", initial_indent=10, width=10)
-@test_throws ErrorException wrap("", subsequent_indent=10, width=10)
-@test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
-@test_throws ErrorException wrap("", subsequent_indent="~~~~~~~~~~", width=10)
+@test_throws ArgumentError wrap("", width=0)
+@test_throws ArgumentError wrap("", initial_indent=10, width=10)
+@test_throws ArgumentError wrap("", subsequent_indent=10, width=10)
+@test_throws ArgumentError wrap("", initial_indent="~~~~~~~~~~", width=10)
+@test_throws ArgumentError wrap("", subsequent_indent="~~~~~~~~~~", width=10)
 
 end # testset
 
