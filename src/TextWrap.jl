@@ -12,9 +12,6 @@ export
     print_wrapped,
     println_wrapped
 
-# A regex to match any sequence of spaces except non-breakable spaces (\xA0)
-const spaceregex = r"((?!\xA0)\s)+"
-
 ansi_length(s) = length(replace(s, r"\e\[[0-9]+m" => ""))
 
 function _expand_tabs(text::AbstractString, i0::Int)
@@ -184,8 +181,7 @@ function _put_chunk(chunk::AbstractString, out_str,
     end
 
     # detect end-of-sentences
-    _sentence_end_re = r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z"
-    lcise = occursin(_sentence_end_re, chunk)
+    lcise = occursin(r"\w([\.\!\?…]|\.\.\.)[\"\'´„]?\Z", chunk)
 
     return cln, cll, bol, lcise
 end
@@ -242,6 +238,8 @@ function wrap(text::AbstractString;
     iind::String = initial_indent isa Integer ? " "^initial_indent : initial_indent
     sind::String = subsequent_indent isa Integer ? " "^subsequent_indent : subsequent_indent
 
+    # A regex to match any sequence of spaces except non-breakable spaces (\xA0)
+    spaceregex = r"((?!\xA0)\s)+"
 
     # whitespace-only case
     occursin(r"^\s*$", text) && return iind
