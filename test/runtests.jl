@@ -3,7 +3,23 @@ module TextWrapTest
 using TextWrap
 using Test
 
+@testset "empty" begin
+
+@test wrap("") == ""
+@test wrap("  \n") == ""
+@test wrap("\n  ") == ""
+@test wrap("\t\n\t\n") == ""
+@test wrap("", initial_indent=2) == "  "
+
+end # testset
+
 @testset "plain" begin
+
+@test wrap("a b") == "a b"
+@test wrap("a\n\nb\n\n") == "a b"
+@test wrap("\n\na\n\nb\n\n") == "a b"
+@test wrap(" a  ", initial_indent=3) == "   a"
+@test wrap(" a  ", initial_indent=">  ") == ">  a"
 
 global text = """
     Julia is a high-level, high-performance dynamic programming language
@@ -77,7 +93,7 @@ global text = """
 
 end # testset
 
-@testset "tabs" begin
+@testset "whitespace" begin
 
 tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
 
@@ -89,6 +105,19 @@ tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
     "aaaaaaa bbbbbbb\ncccccc ddddd eeee\nfff gg h"
 @test wrap(tabtext, width=20, replace_whitespace=false, expand_tabs=false) ==
     "aaaaaaa\tbbbbbbb\ncccccc\tddddd\teeee\nfff\tgg\th"
+
+@test wrap("\t.\n\t\n") == "."
+@test wrap("\t..\n\t\n", fix_sentence_endings=true) == ".."
+@test wrap("\tabc\n\t\n", width=2, expand_tabs=false) == "ab\nc"
+@test wrap("\t \tabc\n\t\n", width=2) == "ab\nc"
+@test wrap("\ta.\n\t\n", width=1, fix_sentence_endings=false) == "a\n."
+@test wrap("\ta.\n\t\n", width=1, replace_whitespace=false) == "a\n."
+@test wrap("\ta.\tb\n", width=8, expand_tabs=true, replace_whitespace=false) == "a.\nb"
+@test wrap("\ta.\tb\n", width=8, expand_tabs=false, replace_whitespace=false) == "a.\tb"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false) == "a.\tb"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false) == "a.      b"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false, fix_sentence_endings=true) == "a.\tb"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false, fix_sentence_endings=true) == "a.      b"
 
 end # testset
 
@@ -419,6 +448,21 @@ end # testset
 tmpf = tempname()
 try
     open(tmpf, "w") do f
+        print_wrapped(f)
+    end
+    @test read(tmpf, String) == ""
+
+    open(tmpf, "w") do f
+        print_wrapped(f, initial_indent=2, subsequent_indent=2)
+    end
+    @test read(tmpf, String) == "  "
+
+    open(tmpf, "w") do f
+        print_wrapped(f, "")
+    end
+    @test read(tmpf, String) == ""
+
+    open(tmpf, "w") do f
         print_wrapped(f, text, width=30, fix_sentence_endings=true, break_on_hyphens=false)
     end
     @test read(tmpf, String) == """
@@ -488,6 +532,7 @@ end # testset
 
 @testset "argument checks" begin
 
+@test_throws ErrorException wrap("", width=0)
 @test_throws ErrorException wrap("", initial_indent=10, width=10)
 @test_throws ErrorException wrap("", subsequent_indent=10, width=10)
 @test_throws ErrorException wrap("", initial_indent="~~~~~~~~~~", width=10)
