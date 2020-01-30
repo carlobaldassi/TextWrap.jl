@@ -222,7 +222,8 @@ The behaviour can be controlled via optional keyword arguments:
   fit in any line. If `true`, the word will be broken, otherwise it will go beyond the desired text
   width.
 * `replace_whitespace` (default=`true`): if this flag is `true`, all whitespace characters in the
-  original text (including newlines) will be replaced by spaces.
+  original text (including newlines) will be replaced by spaces. Otherwise, they'll be preserved,
+  except at the beginning or end of a line.
 * `expand_tabs` (default=`true`): if this flag is `true`, tabs will be expanded in-place into
   spaces. Otherwise a tab is counted as a single character. The expansion happens before whitespace
   replacement.
@@ -289,8 +290,17 @@ function wrap(text::AbstractString;
             soh = "  "
         end
         if p.rep_white
-            soh = replace(soh, "\n"=>"")
+            soh = replace(soh, r"\r?\n"=>"")
             soh = isempty(soh) ? " " : " "^length(soh)
+        else
+            while (fnl = findfirst(==('\n'), soh)) ≢ nothing # using the `==` form to support julia 1.0-1.2
+                ind = s.cln == 1 ? p.iind : p.sind
+                print(out_str, ind, '\n')
+                s.cll = 0
+                s.cln += 1
+                s.bol = true
+                soh = soh[nextind(soh, fnl):end]
+            end
         end
         s.soh = soh
 

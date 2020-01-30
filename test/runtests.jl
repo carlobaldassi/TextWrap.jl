@@ -100,24 +100,30 @@ tabtext = "aaaaaaa\tbbbbbbb\t\ncccccc\tddddd\teeee  \tfff\tgg\th\n"
 @test wrap(tabtext, width=20, replace_whitespace=true,  expand_tabs=true) ==
     "aaaaaaa bbbbbbb\ncccccc  ddddd   eeee\nfff     gg      h"
 @test wrap(tabtext, width=20, replace_whitespace=false, expand_tabs=true) ==
-    "aaaaaaa bbbbbbb\ncccccc  ddddd   eeee\nfff     gg      h"
+    "aaaaaaa bbbbbbb\ncccccc  ddddd   eeee\nfff     gg      h\n"
 @test wrap(tabtext, width=20, replace_whitespace=true,  expand_tabs=false) ==
     "aaaaaaa bbbbbbb\ncccccc ddddd eeee\nfff gg h"
 @test wrap(tabtext, width=20, replace_whitespace=false, expand_tabs=false) ==
-    "aaaaaaa\tbbbbbbb\ncccccc\tddddd\teeee\nfff\tgg\th"
+    "aaaaaaa\tbbbbbbb\ncccccc\tddddd\teeee\nfff\tgg\th\n"
+
+@test wrap("abc\ndefg h i j k", width=8, replace_whitespace=false) ==
+           "abc\ndefg h i\nj k"
+@test wrap("abc\ndefg h i j k", width=8, replace_whitespace=true) ==
+           "abc defg\nh i j k"
 
 @test wrap("\t.\n\t\n") == "."
 @test wrap("\t..\n\t\n", fix_sentence_endings=true) == ".."
 @test wrap("\tabc\n\t\n", width=2, expand_tabs=false) == "ab\nc"
 @test wrap("\t \tabc\n\t\n", width=2) == "ab\nc"
 @test wrap("\ta.\n\t\n", width=1, fix_sentence_endings=false) == "a\n."
-@test wrap("\ta.\n\t\n", width=1, replace_whitespace=false) == "a\n."
-@test wrap("\ta.\tb\n", width=8, expand_tabs=true, replace_whitespace=false) == "a.\nb"
-@test wrap("\ta.\tb\n", width=8, expand_tabs=false, replace_whitespace=false) == "a.\tb"
-@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false) == "a.\tb"
-@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false) == "a.      b"
-@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false, fix_sentence_endings=true) == "a.\tb"
-@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false, fix_sentence_endings=true) == "a.      b"
+@test wrap("\ta.\n\t\n", width=1, replace_whitespace=false) == "a\n.\n\n"
+@test wrap("\ta.\tb\n", width=8, expand_tabs=true, replace_whitespace=true) == "a.\nb"
+@test wrap("\ta.\tb\n", width=8, expand_tabs=true, replace_whitespace=false) == "a.\nb\n"
+@test wrap("\ta.\tb\n", width=8, expand_tabs=false, replace_whitespace=false) == "a.\tb\n"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false) == "a.\tb\n"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false) == "a.      b\n"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=false, replace_whitespace=false, fix_sentence_endings=true) == "a.\tb\n"
+@test wrap("\ta.\tb\n", width=9, expand_tabs=true, replace_whitespace=false, fix_sentence_endings=true) == "a.      b\n"
 
 end # testset
 
