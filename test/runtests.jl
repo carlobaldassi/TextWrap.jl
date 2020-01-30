@@ -355,7 +355,7 @@ R = Base.text_colors[:reverse]
 r = N * Base.text_colors[:red]
 b = N * U * Base.text_colors[:light_blue]
 y = N * B * Base.text_colors[:light_yellow]
-m = N * B * R * Base.text_colors[:light_magenta]
+m = N * B * R * Base.text_colors[134]
 
 etext = """
     Julia is a $(r)high-level$(N), $(b)$(B)high$(b)-performance$(N) dynamic programming language

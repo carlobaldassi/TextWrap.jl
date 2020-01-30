@@ -12,7 +12,7 @@ export
     print_wrapped,
     println_wrapped
 
-ansi_length(s) = length(replace(s, r"\e\[[0-9]+m" => ""))
+ansi_length(s) = length(replace(s, r"\e\[[0-9]+(?:;[0-9]+)*m" => ""))
 
 function apply_expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
