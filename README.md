@@ -6,23 +6,6 @@
 
 This [Julia] package allows to wrap long lines of text to fit within a given width.
 
-### Installation
-
-### Installation and usage
-
-To install the module, use Julia's package manager: start pkg mode by pressing `]` and then enter:
-
-```
-(v1.3) pkg> add TextWrap
-```
-
-Dependencies will be installed automatically.
-The module can then be loaded like any other Julia module:
-
-```
-julia> using TextWrap
-```
-
 ### Quick example
 
 ```
@@ -38,10 +21,30 @@ than 20 characters.
 The other exported functions are `wrap` (returns a string) and `print_wrapped`.
 See the documentation for more advanced settings.
 
+### Installation
+
+To install the module, use Julia's package manager: start pkg mode by pressing <kbd>]</kbd> and then enter:
+
+```
+(v1.3) pkg> add TextWrap
+```
+
+Dependencies will be installed automatically.
+The module can then be loaded like any other Julia module:
+
+```
+julia> using TextWrap
+```
+
 ### Documentation
 
 - [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
 - [**DEV**][docs-dev-url] &mdash; *in-development version of the documentation.*
+
+## Changes in release 1.0.1
+
+* Improve recognition of ANSI escape codes
+* Fixes for the `replace_whitespace=true` case
 
 ## Changes in release 1.0.0
 
