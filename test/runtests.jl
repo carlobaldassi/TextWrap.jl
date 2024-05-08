@@ -561,6 +561,86 @@ end
 
 end # testset
 
+@testset "number of columns" begin
+
+global text = """
+    The sailboat emoji ⛵ depicts a small boat with a white sail
+    and a blue hull.
+    """
+
+@test wrap(text, width=30) == """
+    The sailboat emoji ⛵ depicts
+    a small boat with a white sail
+    and a blue hull."""
+
+@test wrap(text, width=29) == """
+    The sailboat emoji ⛵ depicts
+    a small boat with a white
+    sail and a blue hull."""
+
+@test wrap(text, width=28) == """
+    The sailboat emoji ⛵
+    depicts a small boat with a
+    white sail and a blue hull."""
+
+global text = """
+    Examples of uses of combining diacritical marks:
+    città, Noël, διακριτικός. The same words written
+    without using combining marks: città, Noël,
+    διακριτικός.
+    """
+
+@test wrap(text, width=32) == """
+    Examples of uses of combining
+    diacritical marks: città, Noël,
+    διακριτικός. The same words
+    written without using combining
+    marks: città, Noël, διακριτικός."""
+
+@test wrap(text, width=31) == """
+    Examples of uses of combining
+    diacritical marks: città, Noël,
+    διακριτικός. The same words
+    written without using combining
+    marks: città, Noël,
+    διακριτικός."""
+
+@test wrap(text, width=30) == """
+    Examples of uses of combining
+    diacritical marks: città,
+    Noël, διακριτικός. The same
+    words written without using
+    combining marks: città, Noël,
+    διακριτικός."""
+
+@test wrap(text, width=29) == """
+    Examples of uses of combining
+    diacritical marks: città,
+    Noël, διακριτικός. The same
+    words written without using
+    combining marks: città, Noël,
+    διακριτικός."""
+
+@test wrap(text, width=28) == """
+    Examples of uses of
+    combining diacritical marks:
+    città, Noël, διακριτικός.
+    The same words written
+    without using combining
+    marks: città, Noël,
+    διακριτικός."""
+
+@test wrap(text, width=25) == """
+    Examples of uses of
+    combining diacritical
+    marks: città, Noël,
+    διακριτικός. The same
+    words written without
+    using combining marks:
+    città, Noël, διακριτικός."""
+
+end # testset
+
 @testset "argument checks" begin
 
 @test_throws ArgumentError wrap("", width=0)

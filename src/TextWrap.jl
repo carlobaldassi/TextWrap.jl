@@ -12,7 +12,7 @@ export
     print_wrapped,
     println_wrapped
 
-ansi_length(s) = length(replace(s, r"\e\[[0-9]+(?:;[0-9]+)*m" => ""))
+ansi_length(s) = textwidth(replace(s, r"\e\[[0-9]+(?:;[0-9]+)*m" => ""))
 
 function apply_expand_tabs(text::AbstractString, i0::Int)
     out_buf = IOBuffer()
@@ -39,14 +39,15 @@ function check_width(width::Integer)
     width ≤ 0 && throw(ArgumentError("invalid width $width (must be > 0)"))
     return true
 end
-function check_indent(indent::Integer, width::Integer)
+function check_indent(indent::Integer, width::Integer; kw...)
     0 ≤ indent < width ||
-        throw(ArgumentError("invalid intent $indent (must be an integer between 0 and width-1, " *
+        throw(ArgumentError("invalid indent $indent (must be an integer between 0 and width-1, " *
                             "or an AbstractString)"))
     return true
 end
-function check_indent(indent::AbstractString, width::Integer)
-    length(indent) ≥ width && throw(ArgumentError("invalid intent (must be shorter than width-1)"))
+function check_indent(indent::AbstractString, width::Integer; recognize_escapes::Bool = true)
+    elength(x)::Int = recognize_escapes ? ansi_length(x) : textwidth(x)
+    elength(indent) ≥ width && throw(ArgumentError("invalid intent (must be shorter than width-1)"))
     return true
 end
 
@@ -82,8 +83,8 @@ struct Params
                     recognize_escapes::Bool
                     )
         check_width(width)
-        check_indent(initial_indent, width)
-        check_indent(subsequent_indent, width)
+        check_indent(initial_indent, width; recognize_escapes=recognize_escapes)
+        check_indent(subsequent_indent, width; recognize_escapes=recognize_escapes)
 
         iind::String = initial_indent isa Integer ? " "^initial_indent : initial_indent
         sind::String = subsequent_indent isa Integer ? " "^subsequent_indent : subsequent_indent
@@ -140,7 +141,7 @@ function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
 
     # This is written as a new function rather than a function reference
     # to help type inference
-    elength(x)::Int = p.rec_esc ? ansi_length(x) : length(x)
+    elength(x)::Int = p.rec_esc ? ansi_length(x) : textwidth(x)
 
     liind = elength(p.iind)
     lsind = elength(p.sind)
