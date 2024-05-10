@@ -41,6 +41,11 @@ julia> using TextWrap
 - [**STABLE**][docs-stable-url] &mdash; **most recently tagged version of the documentation.**
 - [**DEV**][docs-dev-url] &mdash; *in-development version of the documentation.*
 
+## Changes in release 1.0.2
+
+* Correctly account for the width of each character using `textwidth` instead of `length`
+* Fix a bug with `subsequent_indent`
+
 ## Changes in release 1.0.1
 
 * Improve recognition of ANSI escape codes

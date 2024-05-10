@@ -1,6 +1,6 @@
 name = "TextWrap"
 uuid = "b718987f-49a8-5099-9789-dcd902bef87d"
-version = "1.0.1"
+version = "1.0.2"
 author = ["Carlo Baldassi <carlobaldassi@gmail.com>"]
 
 [compat]
