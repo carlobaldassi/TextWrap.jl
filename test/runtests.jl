@@ -563,7 +563,7 @@ end # testset
 
 @testset "number of columns" begin
 
-global text = """
+text = """
     The sailboat emoji ⛵ depicts a small boat with a white sail
     and a blue hull.
     """
@@ -638,6 +638,42 @@ global text = """
     words written without
     using combining marks:
     città, Noël, διακριτικός."""
+
+end # testset
+
+@testset "subsequent indent" begin
+
+text = "AAA BBB CCC DDD"
+
+@test wrap(text, width=8, subsequent_indent=5, break_long_words=false) == """
+    AAA BBB
+         CCC
+         DDD"""
+
+@test wrap(text, width=7, subsequent_indent=5, break_long_words=false) == """
+    AAA BBB
+         CCC
+         DDD"""
+
+@test wrap(text, width=6, subsequent_indent=5, break_long_words=false) == """
+    AAA
+         BBB
+         CCC
+         DDD"""
+
+text = "AAAAAA BBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCC DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD EEEE FFFFFF"
+
+@test wrap(text, width=40, subsequent_indent=24, break_long_words=false) == """
+    AAAAAA BBBBBBBBBBBBBBBBBB
+                            CCCCCCCCCCCCCCCCCCC
+                            DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+                            EEEE FFFFFF"""
+
+@test wrap(text, width=50, subsequent_indent=24, break_long_words=false) == """
+    AAAAAA BBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCC
+                            DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+                            EEEE FFFFFF"""
+
 
 end # testset
 
