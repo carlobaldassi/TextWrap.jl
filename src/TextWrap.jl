@@ -166,8 +166,8 @@ function put_chunk!(out_str::IOBuffer, chunk::AbstractString,
     end
 
     # Is there enough room for the chunk? or is this the
-    # beginning of the text and we cannot break words?
-    if s.cll + lsoh + lchunk ≤ p.width || (s.cln == 1 && s.bol && !p.brk_long)
+    # beginning of the line and we cannot break words?
+    if s.cll + lsoh + lchunk ≤ p.width || (s.bol && !p.brk_long)
         print(out_str, s.soh, chunk)
         s.cll += lchunk + lsoh
         s.bol = false
